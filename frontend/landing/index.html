@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIBI — סל אישי For You</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      min-height: 100vh;
+      color: #f8fafc;
+      direction: rtl;
+    }
+    .container { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+    .hero { text-align: center; margin-bottom: 60px; }
+    .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 12px; }
+    .hero h1 span { color: #60a5fa; }
+    .hero .subtitle { font-size: 1.3rem; color: #94a3b8; margin-bottom: 8px; }
+    .hero .badge {
+      display: inline-block;
+      background: rgba(251, 146, 60, 0.15);
+      color: #fb923c;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 60px; }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 32px 28px;
+      transition: all 0.3s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: #60a5fa;
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .card .icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+    .card .role { color: #60a5fa; font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; }
+    .card p { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; }
+    .card .features { list-style: none; padding: 0; }
+    .card .features li { color: #cbd5e1; font-size: 0.85rem; padding: 4px 0; }
+    .card .features li::before { content: "✓ "; color: #34d399; font-weight: bold; }
+    .card .cta {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 24px;
+      background: #1d4ed8;
+      color: white;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .card:hover .cta { background: #2563eb; }
+    .info { text-align: center; margin-bottom: 40px; }
+    .info h3 { font-size: 1.2rem; color: #94a3b8; font-weight: 400; margin-bottom: 24px; }
+    .stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat .num { font-size: 2rem; font-weight: 800; color: #60a5fa; }
+    .stat .label { font-size: 0.85rem; color: #64748b; }
+    .footer { text-align: center; padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+    .footer p { color: #475569; font-size: 0.85rem; }
+    .footer a { color: #60a5fa; text-decoration: none; }
+    .github-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: #94a3b8; text-decoration: none; font-size: 0.9rem;
+      margin-top: 12px; transition: color 0.2s;
+    }
+    .github-link:hover { color: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>LIBI — <span>סל אישי</span> For You</h1>
+      <p class="subtitle">מערכת הפעלה לזכויות ושירותים לאזרח הוותיק</p>
+      <div class="badge">⚡ דמו אסטרטגי — הוכחת היתכנות</div>
+    </div>
+
+    <div class="cards">
+      <a class="card" href="https://libi-sal-ishi.vercel.app" target="_blank">
+        <div class="icon">👵</div>
+        <h2>ממשק האזרח</h2>
+        <div class="role">Web Client</div>
+        <p>הממשק שהאזרח הוותיק רואה — שיחה עם AI, גלישה בשירותים, הזמנה בקליק</p>
+        <ul class="features">
+          <li>שיחה בעברית פשוטה עם AI</li>
+          <li>שוק שירותים מותאם אישית</li>
+          <li>ארנק דיגיטלי ליחידות סיעוד</li>
+          <li>קהילה ופרופיל אישי</li>
+        </ul>
+        <span class="cta">פתח ממשק →</span>
+      </a>
+
+      <a class="card" href="https://libi-case-manager.vercel.app" target="_blank">
+        <div class="icon">📋</div>
+        <h2>לוח בקרה למתאמת</h2>
+        <div class="role">Case Manager Dashboard</div>
+        <p>ניהול 75+ לקוחות, התראות חכמות, פעולות CRM, ו-KPIs בזמן אמת</p>
+        <ul class="features">
+          <li>75 לקוחות עם פרופיל מלא</li>
+          <li>התראות דחופות ופעולות CRM</li>
+          <li>KPI dashboard — ניצול, מניעה, שביעות רצון</li>
+          <li>דוחות ומעקב</li>
+        </ul>
+        <span class="cta">פתח לוח בקרה →</span>
+      </a>
+
+      <a class="card" href="https://libi-vendor-portal.vercel.app" target="_blank">
+        <div class="icon">🏪</div>
+        <h2>פורטל ספקים</h2>
+        <div class="role">Vendor Portal</div>
+        <p>ניהול שירותים, הזמנות ותשלומים — הצד של ספק השירות</p>
+        <ul class="features">
+          <li>ניהול קטלוג שירותים</li>
+          <li>הזמנות ולוח זמנים</li>
+          <li>מעקב תשלומים</li>
+          <li>דירוגים וביקורות</li>
+        </ul>
+        <span class="cta">פתח פורטל →</span>
+      </a>
+    </div>
+
+    <div class="info">
+      <h3>המערכת בנויה מ-3 שירותי Backend + 3 ממשקי Frontend</h3>
+      <div class="stats">
+        <div class="stat"><div class="num">75</div><div class="label">לקוחות דמו</div></div>
+        <div class="stat"><div class="num">18</div><div class="label">שירותים בשוק</div></div>
+        <div class="stat"><div class="num">3</div><div class="label">תרחישי AI</div></div>
+        <div class="stat"><div class="num">5</div><div class="label">עולמות תוכן</div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a class="github-link" href="https://github.com/AVI1840/libi-sal-ishi" target="_blank">
+        📂 GitHub Repository — קוד מקור, תיעוד, והוראות הרצה
+      </a>
+      <p style="margin-top: 16px;">LIBI — כי כל אזרח ותיק ראוי לקבל את מה שמגיע לו</p>
+    </div>
+  </div>
+</body>
+</html>
