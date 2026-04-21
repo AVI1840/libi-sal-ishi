@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { DemoNav } from "./components/DemoNav";
 import Layout from "./components/Layout";
 import { AppProvider } from "./contexts/AppContext";
 import Bookings from "./pages/Bookings";
@@ -12,6 +13,7 @@ import Settings from "./pages/Settings";
 function App() {
   return (
     <AppProvider>
+      <DemoNav current="vendor" />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
