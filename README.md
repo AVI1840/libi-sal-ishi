@@ -12,6 +12,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Demo](https://img.shields.io/badge/Status-Strategic%20Demo-orange.svg)]()
 
+**🔗 [דף נחיתה](https://libi-landing.vercel.app) · [ממשק אזרח](https://libi-sal-ishi.vercel.app) · [לוח בקרה למתאמת](https://libi-case-manager.vercel.app) · [פורטל ספקים](https://libi-vendor-portal.vercel.app)**
+
 </div>
 
 ---
