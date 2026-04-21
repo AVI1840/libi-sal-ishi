@@ -1,0 +1,21 @@
+{
+  "name": "@libi/frontend",
+  "private": true,
+  "workspaces": [
+    "shared-ui",
+    "web-client",
+    "case-manager-dashboard",
+    "vendor-portal"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev --workspace=@libi/web-client",
+    "dev:manager": "npm run dev --workspace=@libi/case-manager-dashboard",
+    "dev:vendor": "npm run dev --workspace=@libi/vendor-portal",
+    "dev:all": "concurrently \"npm run dev:client\" \"npm run dev:manager\" \"npm run dev:vendor\"",
+    "build:all": "npm run build --workspaces",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

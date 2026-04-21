@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: libi-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: libi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: libi-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # AI Agent Service
+  ai-agent:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.ai-agent
+    container_name: libi-ai-agent
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/libi_db
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-in-production-min-32-chars}
+      - ENVIRONMENT=development
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Marketplace Service
+  marketplace:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.marketplace
+    container_name: libi-marketplace
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/libi_db
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-in-production-min-32-chars}
+      - ENVIRONMENT=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Integration Gateway
+  integration:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.integration
+    container_name: libi-integration
+    ports:
+      - "8000:8000"
+    environment:
+      - INTEGRATION_AI_AGENT_URL=http://ai-agent:8001
+      - INTEGRATION_MARKETPLACE_URL=http://marketplace:8002
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-in-production-min-32-chars}
+      - ENVIRONMENT=development
+    depends_on:
+      - ai-agent
+      - marketplace
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: libi-network

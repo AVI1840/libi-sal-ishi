@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy shared package
+COPY packages/shared /app/packages/shared
+
+# Copy AI Agent package
+COPY packages/ai-agent /app/packages/ai-agent
+
+# Install packages
+RUN pip install --no-cache-dir -e /app/packages/shared
+RUN pip install --no-cache-dir -e /app/packages/ai-agent
+
+# Set working directory to ai-agent
+WORKDIR /app/packages/ai-agent
+
+# Expose port
+EXPOSE 8001
+
+# Run the application
+CMD ["uvicorn", "ai_agent.main:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy shared package
+COPY packages/shared /app/packages/shared
+
+# Copy Marketplace package
+COPY packages/marketplace /app/packages/marketplace
+
+# Install packages
+RUN pip install --no-cache-dir -e /app/packages/shared
+RUN pip install --no-cache-dir -e /app/packages/marketplace
+
+# Set working directory to marketplace
+WORKDIR /app/packages/marketplace
+
+# Expose port
+EXPOSE 8002
+
+# Run the application
+CMD ["uvicorn", "marketplace.main:app", "--host", "0.0.0.0", "--port", "8002"]
