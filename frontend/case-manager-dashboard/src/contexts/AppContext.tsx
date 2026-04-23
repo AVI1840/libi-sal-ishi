@@ -1,11 +1,17 @@
-import { Booking, Client, clients, bookings as initialBookings } from "@libi/shared-ui/data/mockData";
-import { createContext, ReactNode, useContext, useState } from "react";
+import { Booking, Client, clients } from "@libi/shared-ui/data/mockData";
+import {
+  type ScenarioDay,
+  getScenarioState,
+  SARAH_BASE,
+  type ScenarioAlert,
+} from "@libi/shared-ui/data/scenario";
+import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 
 interface Alert {
   id: string;
   clientId: string;
-  type: "health" | "loneliness" | "cognitive" | "emergency";
-  severity: "critical" | "warning" | "info";
+  type: "health" | "loneliness" | "cognitive" | "emergency" | "booking_confirmed" | "service_completed" | "kpi_update" | "balance_update";
+  severity: "critical" | "warning" | "info" | "success";
   title: string;
   description: string;
   createdAt: Date;
@@ -14,6 +20,8 @@ interface Alert {
 }
 
 interface AppContextType {
+  currentDay: ScenarioDay;
+  setCurrentDay: (day: ScenarioDay) => void;
   clients: Client[];
   bookings: Booking[];
   alerts: Alert[];
@@ -21,106 +29,84 @@ interface AppContextType {
   setSelectedClient: (client: Client | null) => void;
   markAlertAsRead: (alertId: string) => void;
   resolveAlert: (alertId: string) => void;
-  createBooking: (booking: Omit<Booking, "id" | "createdAt">) => void;
+  createBooking: (booking: Omit<Booking, "id">) => void;
   updateBookingStatus: (bookingId: string, status: Booking["status"]) => void;
   unreadAlertsCount: number;
   pendingBookingsCount: number;
+  changelog: string[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Generate mock alerts
-const generateAlerts = (): Alert[] => [
-  {
-    id: "alert-1",
-    clientId: clients[0]?.id || "1",
-    type: "health",
-    severity: "critical",
-    title: "חריגה בלחץ דם",
-    description: "לחץ הדם של רחל כהן עלה מעל 180/110",
-    createdAt: new Date(Date.now() - 30 * 60 * 1000),
-    isRead: false,
+function scenarioAlertsToAlerts(scenarioAlerts: ScenarioAlert[]): Alert[] {
+  return scenarioAlerts.map(a => ({
+    id: a.id,
+    clientId: 'sarah-cohen',
+    type: a.type as Alert['type'],
+    severity: a.severity === 'success' ? 'info' : a.severity as Alert['severity'],
+    title: a.title,
+    description: a.description,
+    createdAt: new Date(a.timestamp),
+    isRead: !a.isNew,
     isResolved: false,
-  },
-  {
-    id: "alert-2",
-    clientId: clients[2]?.id || "3",
-    type: "loneliness",
-    severity: "warning",
-    title: "חשד לבדידות",
-    description: "שלמה לוי לא יצר קשר 5 ימים",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    isRead: false,
-    isResolved: false,
-  },
-  {
-    id: "alert-3",
-    clientId: clients[5]?.id || "6",
-    type: "cognitive",
-    severity: "info",
-    title: "שינוי בדפוס שיחה",
-    description: "זוהה שינוי קל בדפוס השיחה של משה אברהם",
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    isRead: true,
-    isResolved: false,
-  },
-  {
-    id: "alert-4",
-    clientId: clients[1]?.id || "2",
-    type: "health",
-    severity: "warning",
-    title: "דופק לא סדיר",
-    description: "זוהה דופק לא סדיר אצל יעקב לוי",
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    isRead: false,
-    isResolved: false,
-  },
-];
+  }));
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [allClients] = useState<Client[]>(clients);
-  const [allBookings, setAllBookings] = useState<Booking[]>(initialBookings);
-  const [alerts, setAlerts] = useState<Alert[]>(generateAlerts());
+  const [currentDay, setCurrentDay] = useState<ScenarioDay>(1);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [readAlerts, setReadAlerts] = useState<Set<string>>(new Set());
+  const [resolvedAlerts, setResolvedAlerts] = useState<Set<string>>(new Set());
+
+  const scenario = getScenarioState(currentDay);
+
+  // Merge Sarah into the client list (replace first client)
+  const allClients = useMemo(() => {
+    const sarahInList = [scenario.sarah, ...clients.filter(c => c.id !== 'sarah-cohen').slice(0, 74)];
+    return sarahInList;
+  }, [scenario.sarah]);
+
+  // Scenario bookings as Booking[]
+  const allBookings: Booking[] = scenario.bookings.map(b => ({
+    ...b,
+    scheduledDate: b.scheduledDate || new Date().toISOString(),
+  }));
+
+  // Alerts from scenario + some static ones
+  const alerts: Alert[] = useMemo(() => {
+    const fromScenario = scenarioAlertsToAlerts(scenario.alerts);
+    return fromScenario.map(a => ({
+      ...a,
+      isRead: readAlerts.has(a.id) || a.isRead,
+      isResolved: resolvedAlerts.has(a.id),
+    }));
+  }, [scenario.alerts, readAlerts, resolvedAlerts]);
 
   const markAlertAsRead = (alertId: string) => {
-    setAlerts((prev) =>
-      prev.map((alert) =>
-        alert.id === alertId ? { ...alert, isRead: true } : alert
-      )
-    );
+    setReadAlerts(prev => new Set(prev).add(alertId));
   };
 
   const resolveAlert = (alertId: string) => {
-    setAlerts((prev) =>
-      prev.map((alert) =>
-        alert.id === alertId ? { ...alert, isResolved: true, isRead: true } : alert
-      )
-    );
+    setResolvedAlerts(prev => new Set(prev).add(alertId));
+    setReadAlerts(prev => new Set(prev).add(alertId));
   };
 
-  const createBooking = (booking: Omit<Booking, "id">) => {
-    const newBooking: Booking = {
-      ...booking,
-      id: `booking-${Date.now()}`,
-    };
-    setAllBookings((prev) => [...prev, newBooking]);
+  const createBooking = (_booking: Omit<Booking, "id">) => {
+    // In scenario mode, bookings are driven by timeline
   };
 
-  const updateBookingStatus = (bookingId: string, status: Booking["status"]) => {
-    setAllBookings((prev) =>
-      prev.map((booking) =>
-        booking.id === bookingId ? { ...booking, status } : booking
-      )
-    );
+  const updateBookingStatus = (_bookingId: string, _status: Booking["status"]) => {
+    // In scenario mode, statuses are driven by timeline
   };
 
-  const unreadAlertsCount = alerts.filter((a) => !a.isRead && !a.isResolved).length;
-  const pendingBookingsCount = allBookings.filter((b) => b.status === "pending").length;
+  const unreadAlertsCount = alerts.filter(a => !a.isRead && !a.isResolved).length;
+  const pendingBookingsCount = allBookings.filter(b => b.status === "pending").length;
 
   return (
     <AppContext.Provider
       value={{
+        currentDay,
+        setCurrentDay,
         clients: allClients,
         bookings: allBookings,
         alerts,
@@ -132,6 +118,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateBookingStatus,
         unreadAlertsCount,
         pendingBookingsCount,
+        changelog: scenario.changelog,
       }}
     >
       {children}

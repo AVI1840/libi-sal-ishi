@@ -11,11 +11,19 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import { ScenarioTimeline } from "@libi/shared-ui/components/ScenarioTimeline";
+import { useApp } from "./contexts/AppContext";
+
+function TimelineBar() {
+  const { currentDay, setCurrentDay } = useApp();
+  return <ScenarioTimeline currentDay={currentDay} onDayChange={setCurrentDay} />;
+}
 
 function App() {
   return (
     <AppProvider>
       <DemoNav current="manager" />
+      <TimelineBar />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>

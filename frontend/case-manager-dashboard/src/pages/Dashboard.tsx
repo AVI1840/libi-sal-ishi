@@ -1,348 +1,345 @@
 import { Badge } from "@libi/shared-ui/components/ui/badge";
 import { Progress } from "@libi/shared-ui/components/ui/progress";
+import { KPIClosingScreen } from "@libi/shared-ui/components/KPIClosingScreen";
 import {
-    CONTENT_WORLD_ICONS,
-    CONTENT_WORLD_LABELS,
-    contentWorldStats,
-    CRM_ACTION_LABELS,
-    crmActions,
-    kpiMetrics,
+  getScenarioState,
+  getScenarioKPIs,
+  getScenarioCRMActions,
+  SCENARIO_DAYS,
+  RECOMMENDATION_TYPE_LABELS,
+} from "@libi/shared-ui/data/scenario";
+import {
+  CRM_ACTION_LABELS,
 } from "@libi/shared-ui/data";
 import {
-    Activity,
-    AlertTriangle,
-    ArrowDown,
-    ArrowLeftCircle,
-    ArrowUp,
-    Bell,
-    CheckCircle2,
-    Heart,
-    Sparkles,
-    TrendingUp,
-    Users
+  Activity,
+  AlertTriangle,
+  ArrowLeftCircle,
+  ArrowUp,
+  ArrowDown,
+  Bell,
+  CheckCircle2,
+  Heart,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Wallet,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../contexts/AppContext";
 
 export default function Dashboard() {
-  const { clients, bookings, alerts, unreadAlertsCount } = useApp();
+  const { clients, bookings, alerts, unreadAlertsCount, currentDay, changelog } = useApp();
+  const [showKPI, setShowKPI] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [prevDay, setPrevDay] = useState(currentDay);
 
-  // Calculate statistics
+  const scenario = getScenarioState(currentDay);
+  const kpis = getScenarioKPIs(currentDay);
+  const scenarioCRM = getScenarioCRMActions(currentDay);
+  const dayInfo = SCENARIO_DAYS.find(d => d.day === currentDay);
+  const sarah = scenario.sarah;
+
+  // AI loading on day change
+  useEffect(() => {
+    if (currentDay !== prevDay) {
+      setAiLoading(true);
+      const timer = setTimeout(() => {
+        setAiLoading(false);
+        setPrevDay(currentDay);
+        if (currentDay === 14) setTimeout(() => setShowKPI(true), 600);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentDay, prevDay]);
+
   const totalClients = clients.length;
-  const activeBookings = bookings.filter((b) => b.status === "confirmed" || b.status === "in_progress").length;
-  const completedThisMonth = bookings.filter(
-    (b) => b.status === "completed" &&
-    new Date(b.scheduledDate).getMonth() === new Date().getMonth()
-  ).length;
+  const completedBookings = bookings.filter(b => b.status === "completed").length;
+  const pendingCRM = scenarioCRM.filter(a => a.status === "pending" || a.status === "in_progress");
 
-  // CRM Actions stats
-  const pendingActions = crmActions.filter((a) => a.status === "pending");
-  const highPriorityActions = pendingActions.filter((a) => a.priority === "high");
-
-  // Recent alerts (unresolved, sorted by date)
   const recentAlerts = alerts
-    .filter((a) => !a.isResolved)
+    .filter(a => !a.isResolved)
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 3);
-
-  // Recent CRM actions
-  const recentActions = pendingActions.slice(0, 4);
-
-  // Upcoming bookings
-  const upcomingBookings = bookings
-    .filter((b) => b.status === "confirmed" && new Date(b.scheduledDate) > new Date())
-    .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
-    .slice(0, 5);
-
-  // Clients needing attention (low wallet balance or high nursing level)
-  const clientsNeedingAttention = clients
-    .filter((c) => c.walletBalance < 10 || c.nursingLevel >= 5)
-    .slice(0, 5);
+    .slice(0, 4);
 
   const getAlertIcon = (type: string) => {
     switch (type) {
-      case "health": return Activity;
       case "loneliness": return Heart;
-      case "cognitive": return Activity;
+      case "booking_confirmed": case "service_completed": return CheckCircle2;
+      case "kpi_update": return TrendingUp;
       default: return AlertTriangle;
     }
   };
 
-  const getSeverityClass = (severity: string) => {
-    switch (severity) {
-      case "critical": return "critical";
-      case "warning": return "warning";
-      default: return "info";
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-
-    if (minutes < 60) return `לפני ${minutes} דקות`;
-    if (hours < 24) return `לפני ${hours} שעות`;
-    return `לפני ${Math.floor(hours / 24)} ימים`;
-  };
-
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8" dir="rtl">
+      {/* AI Loading */}
+      {aiLoading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(4px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 14,
+            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 14, animation: 'pulse 1s ease infinite',
+          }}>
+            <Sparkles style={{ width: 28, height: 28, color: '#fff' }} />
+          </div>
+          <p style={{ color: '#fff', fontSize: '1rem', fontWeight: 700 }}>LIBI מעדכנת נתונים...</p>
+          <style>{`@keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }`}</style>
+        </div>
+      )}
+
+      {showKPI && <KPIClosingScreen onClose={() => setShowKPI(false)} />}
+
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">שלום, שרית 👋</h1>
-        <p className="text-gray-500 mt-1">הנה סיכום הפעילות של היום</p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">שלום, שרית 👋</h1>
+            <p className="text-gray-500 mt-0.5 text-sm">{dayInfo?.label} · {dayInfo?.description}</p>
+          </div>
+          {currentDay === 14 && (
+            <button
+              onClick={() => setShowKPI(true)}
+              className="px-4 py-2 rounded-xl text-white text-sm font-bold"
+              style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}
+            >
+              📊 תוצאות פיילוט
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Sarah spotlight card */}
+      <div className="rounded-2xl p-5 mb-6 text-white" style={{
+        background: 'linear-gradient(135deg, #1B3A5C 0%, #2d5a8c 100%)',
+      }}>
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <p className="text-white/50 text-xs">מקרה מוביל</p>
+            <p className="text-lg font-bold">{sarah.name}</p>
+            <p className="text-white/60 text-sm">{sarah.age} · {sarah.city} · רמת סיעוד {sarah.nursingLevel}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-white/10 rounded-lg px-3 py-1.5 text-center">
+              <p className="text-[10px] text-white/50">ארנק</p>
+              <p className="font-bold text-sm flex items-center gap-1"><Wallet className="w-3 h-3" />{sarah.walletBalance}/{sarah.walletTotal}</p>
+            </div>
+            <div className="bg-white/10 rounded-lg px-3 py-1.5 text-center">
+              <p className="text-[10px] text-white/50">בדידות</p>
+              <p className="font-bold text-sm">{sarah.levProfile?.lonelinessScore}/10</p>
+            </div>
+            <div className="bg-white/10 rounded-lg px-3 py-1.5 text-center">
+              <p className="text-[10px] text-white/50">שירותים</p>
+              <p className="font-bold text-sm">{completedBookings}</p>
+            </div>
+          </div>
+        </div>
+        {/* Changelog */}
+        {changelog.length > 0 && (
+          <div className="pt-3 border-t border-white/10">
+            {changelog.slice(0, 3).map((item, i) => (
+              <p key={i} className="text-xs text-white/70 mb-0.5">
+                <span className="text-white/40 mr-1">•</span> {item}
+              </p>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Link to="/actions" className="stat-card hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary" />
             </div>
-            {highPriorityActions.length > 0 && (
-              <Badge variant="destructive">{highPriorityActions.length} דחופות</Badge>
-            )}
+            {pendingCRM.length > 0 && <Badge variant="destructive" className="text-xs">{pendingCRM.length}</Badge>}
           </div>
-          <p className="text-2xl font-bold text-gray-900">{pendingActions.length}</p>
-          <p className="text-sm text-gray-500">פעולות לב ממתינות</p>
+          <p className="text-xl font-bold text-gray-900">{pendingCRM.length}</p>
+          <p className="text-xs text-gray-500">פעולות ממתינות</p>
         </Link>
 
         <div className="stat-card">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-600" />
             </div>
-            <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{totalClients}</p>
-          <p className="text-sm text-gray-500">מטופלים פעילים</p>
+          <p className="text-xl font-bold text-gray-900">{totalClients}</p>
+          <p className="text-xs text-gray-500">מטופלים פעילים</p>
         </div>
 
         <div className="stat-card">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-              <Bell className="w-6 h-6 text-amber-600" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-amber-600" />
             </div>
-            {unreadAlertsCount > 0 && (
-              <Badge variant="destructive">{unreadAlertsCount} חדשות</Badge>
-            )}
+            {unreadAlertsCount > 0 && <Badge variant="destructive" className="text-xs">{unreadAlertsCount}</Badge>}
           </div>
-          <p className="text-2xl font-bold text-gray-900">{alerts.filter(a => !a.isResolved).length}</p>
-          <p className="text-sm text-gray-500">התראות פתוחות</p>
+          <p className="text-xl font-bold text-gray-900">{recentAlerts.length}</p>
+          <p className="text-xs text-gray-500">התראות פתוחות</p>
         </div>
 
         <div className="stat-card">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
             </div>
-            <span className="text-sm text-green-600 font-medium">+12%</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">{completedThisMonth}</p>
-          <p className="text-sm text-gray-500">הושלמו החודש</p>
+          <p className="text-xl font-bold text-gray-900">{completedBookings}</p>
+          <p className="text-xs text-gray-500">שירותים הושלמו</p>
         </div>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CRM Actions Section */}
+        {/* CRM Actions — scenario-driven */}
         <div className="dashboard-card lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              פעולות לב ממתינות
+            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              פעולות לב — שרה כהן
             </h2>
-            <Link
-              to="/actions"
-              className="text-sm text-primary hover:underline flex items-center gap-1"
-            >
-              צפייה בכל
-              <ArrowLeftCircle className="w-4 h-4" />
+            <Link to="/actions" className="text-xs text-primary hover:underline flex items-center gap-1">
+              כל הפעולות <ArrowLeftCircle className="w-3 h-3" />
             </Link>
           </div>
-
-          <div className="space-y-3">
-            {recentActions.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">אין פעולות ממתינות 🎉</p>
+          <div className="space-y-2">
+            {scenarioCRM.length === 0 ? (
+              <p className="text-gray-500 text-center py-6 text-sm">אין פעולות ממתינות 🎉</p>
             ) : (
-              recentActions.map((action) => {
-                const client = clients.find((c) => c.id === action.clientId);
-
-                return (
-                  <Link
-                    key={action.id}
-                    to="/actions"
-                    className={`flex items-start gap-3 p-3 rounded-lg border hover:shadow-sm transition-shadow ${
-                      action.priority === "high" ? "bg-red-50/50 border-red-100" :
-                      action.priority === "medium" ? "bg-amber-50/50 border-amber-100" :
-                      "bg-blue-50/50 border-blue-100"
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      action.priority === "high" ? "bg-red-100" :
-                      action.priority === "medium" ? "bg-amber-100" : "bg-blue-100"
-                    }`}>
-                      {action.actionType === "loneliness_intervention" ? (
-                        <Heart className={`w-5 h-5 ${
-                          action.priority === "high" ? "text-red-600" :
-                          action.priority === "medium" ? "text-amber-600" : "text-blue-600"
-                        }`} />
-                      ) : (
-                        <Activity className={`w-5 h-5 ${
-                          action.priority === "high" ? "text-red-600" :
-                          action.priority === "medium" ? "text-amber-600" : "text-blue-600"
-                        }`} />
+              scenarioCRM.map((action) => (
+                <div
+                  key={action.id}
+                  className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
+                    action.status === 'completed' ? 'bg-green-50/50 border-green-200 opacity-70' :
+                    action.priority === "high" ? "bg-red-50/50 border-red-200" :
+                    action.priority === "medium" ? "bg-amber-50/50 border-amber-200" :
+                    "bg-blue-50/50 border-blue-200"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    action.status === 'completed' ? 'bg-green-100' :
+                    action.priority === "high" ? "bg-red-100" :
+                    action.priority === "medium" ? "bg-amber-100" : "bg-blue-100"
+                  }`}>
+                    {action.status === 'completed' ? (
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    ) : action.actionType === "loneliness_intervention" ? (
+                      <Heart className="w-4 h-4 text-red-500" />
+                    ) : (
+                      <Activity className="w-4 h-4 text-amber-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-gray-900">{action.title}</p>
+                      <Badge variant="outline" className="text-[10px]">
+                        {CRM_ACTION_LABELS[action.actionType as keyof typeof CRM_ACTION_LABELS] || action.actionType}
+                      </Badge>
+                      {action.status === 'completed' && (
+                        <span className="text-[10px] text-green-600 font-bold">✓ הושלם</span>
+                      )}
+                      {action.status === 'in_progress' && (
+                        <span className="text-[10px] text-blue-600 font-bold">⏳ בטיפול</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-gray-900">{action.title}</p>
-                        <Badge variant="outline" className={`text-xs ${
-                          action.priority === "high" ? "bg-red-100 text-red-700 border-red-200" :
-                          action.priority === "medium" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                          "bg-blue-100 text-blue-700 border-blue-200"
-                        }`}>
-                          {CRM_ACTION_LABELS[action.actionType]}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">{action.description}</p>
-                      {client && (
-                        <span className="text-xs text-primary">• {client.name}</span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })
+                    <p className="text-xs text-gray-500 mt-0.5">{action.description}</p>
+                    {action.suggestedAction && action.status !== 'completed' && (
+                      <p className="text-xs text-primary mt-1 font-medium">💡 {action.suggestedAction}</p>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
 
-        {/* KPIs Section */}
+        {/* KPIs — scenario-driven */}
         <div className="dashboard-card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">מדדי ביצוע</h2>
-
+          <h2 className="text-base font-semibold text-gray-900 mb-4">מדדי ביצוע</h2>
           <div className="space-y-4">
-            {kpiMetrics.slice(0, 4).map((kpi) => (
+            {kpis.map((kpi) => (
               <div key={kpi.id}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">{kpi.nameHe}</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-gray-600">{kpi.nameHe}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-bold text-gray-900">
                       {kpi.value}{kpi.unit}
                     </span>
-                    {kpi.trend !== "stable" && (
-                      <span className={`flex items-center text-xs ${
-                        kpi.trend === "up" ? "text-green-600" : "text-red-600"
+                    {kpi.trend !== "stable" && kpi.trendValue > 0 && (
+                      <span className={`flex items-center text-[10px] font-bold ${
+                        kpi.id === 'inactive_users'
+                          ? (kpi.trend === "down" ? "text-green-600" : "text-red-600")
+                          : (kpi.trend === "up" ? "text-green-600" : "text-red-600")
                       }`}>
-                        {kpi.trend === "up" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                        {kpi.trendValue}%
+                        {kpi.trend === "up" ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
+                        {kpi.trendValue}
                       </span>
                     )}
                   </div>
                 </div>
                 <Progress
-                  value={(kpi.value / kpi.target) * 100}
+                  value={Math.min((kpi.value / kpi.target) * 100, 100)}
                   className={`h-2 ${
                     kpi.status === "good" ? "[&>div]:bg-green-500" :
                     kpi.status === "warning" ? "[&>div]:bg-amber-500" :
                     "[&>div]:bg-red-500"
                   }`}
                 />
+                <p className="text-[10px] text-gray-400 mt-0.5">יעד: {kpi.target}{kpi.unit}</p>
               </div>
             ))}
           </div>
-
-          <Link
-            to="/reports"
-            className="block mt-4 text-sm text-primary hover:underline text-center"
-          >
-            צפייה בכל המדדים →
-          </Link>
         </div>
 
-        {/* Alerts Section */}
-        <div className="dashboard-card lg:col-span-2">
+        {/* Alerts — scenario-driven */}
+        <div className="dashboard-card lg:col-span-3">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">התראות אחרונות</h2>
-            <Link
-              to="/alerts"
-              className="text-sm text-primary hover:underline flex items-center gap-1"
-            >
-              צפייה בכל
-              <ArrowLeftCircle className="w-4 h-4" />
+            <h2 className="text-base font-semibold text-gray-900">התראות אחרונות</h2>
+            <Link to="/alerts" className="text-xs text-primary hover:underline flex items-center gap-1">
+              כל ההתראות <ArrowLeftCircle className="w-3 h-3" />
             </Link>
           </div>
-
-          <div className="space-y-3">
-            {recentAlerts.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">אין התראות פתוחות 🎉</p>
-            ) : (
-              recentAlerts.map((alert) => {
-                const AlertIcon = getAlertIcon(alert.type);
-                const client = clients.find((c) => c.id === alert.clientId);
-
-                return (
-                  <div
-                    key={alert.id}
-                    className={`flex items-start gap-3 p-3 rounded-lg border ${
-                      !alert.isRead ? "bg-red-50/50 border-red-100" : "bg-gray-50 border-gray-100"
-                    }`}
-                  >
-                    <div className={`alert-badge ${getSeverityClass(alert.severity)}`}>
-                      <AlertIcon className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-gray-900">{alert.title}</p>
-                        {!alert.isRead && (
-                          <span className="w-2 h-2 rounded-full bg-red-500" />
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">{alert.description}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-400">{formatTime(alert.createdAt)}</span>
-                        {client && (
-                          <span className="text-xs text-primary">• {client.name}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Content Worlds Overview */}
-        <div className="dashboard-card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">עולמות תוכן</h2>
-
-          <div className="space-y-3">
-            {contentWorldStats.slice(0, 4).map((stat) => (
-              <div key={stat.world} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                <span className="text-2xl">{CONTENT_WORLD_ICONS[stat.world]}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {CONTENT_WORLD_LABELS[stat.world]}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {stat.totalServices} שירותים • ⭐ {stat.avgRating}
-                  </p>
-                </div>
-                <div className="text-left">
-                  <p className={`text-sm font-medium ${
-                    stat.utilizationPercent >= 70 ? "text-green-600" :
-                    stat.utilizationPercent >= 50 ? "text-amber-600" : "text-red-600"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {recentAlerts.map((alert) => {
+              const AlertIcon = getAlertIcon(alert.type);
+              return (
+                <div
+                  key={alert.id}
+                  className={`flex items-start gap-3 p-3 rounded-xl border ${
+                    !alert.isRead ? "bg-blue-50/50 border-blue-200" : "bg-gray-50 border-gray-100"
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    alert.severity === 'critical' ? 'bg-red-100' :
+                    alert.severity === 'warning' ? 'bg-amber-100' :
+                    alert.severity === 'success' || alert.type === 'service_completed' || alert.type === 'booking_confirmed' ? 'bg-green-100' :
+                    'bg-blue-100'
                   }`}>
-                    {stat.utilizationPercent}%
-                  </p>
-                  <p className="text-xs text-gray-500">ניצול</p>
+                    <AlertIcon className={`w-4 h-4 ${
+                      alert.severity === 'critical' ? 'text-red-600' :
+                      alert.severity === 'warning' ? 'text-amber-600' :
+                      alert.severity === 'success' || alert.type === 'service_completed' ? 'text-green-600' :
+                      'text-blue-600'
+                    }`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                      {alert.title}
+                      {!alert.isRead && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{alert.description}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
