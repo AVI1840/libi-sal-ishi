@@ -1,9 +1,10 @@
 import { TooltipProvider } from "@libi/shared-ui";
+import { ScenarioTimeline } from "@libi/shared-ui/components/ScenarioTimeline";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { DemoNav } from "./components/DemoNav";
-import { AppProvider } from "./contexts/AppContext";
+import { AppProvider, useApp } from "./contexts/AppContext";
 import Chat from "./pages/Chat";
 import Community from "./pages/Community";
 import Contact from "./pages/Contact";
@@ -15,11 +16,17 @@ import ServiceDetails from "./pages/ServiceDetails";
 
 const queryClient = new QueryClient();
 
+function TimelineBar() {
+  const { currentDay, setCurrentDay } = useApp();
+  return <ScenarioTimeline currentDay={currentDay} onDayChange={setCurrentDay} />;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AppProvider>
         <DemoNav current="client" />
+        <TimelineBar />
         <Toaster position="top-center" richColors />
         <BrowserRouter>
           <Routes>

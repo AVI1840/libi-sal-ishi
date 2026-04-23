@@ -1,4 +1,10 @@
-import { Client, Service, clients, defaultClient } from '@libi/shared-ui';
+import { Client, Service } from '@libi/shared-ui';
+import {
+  type ScenarioDay,
+  getScenarioState,
+  type RecommendedService,
+  type ScenarioAlert,
+} from '@libi/shared-ui/data/scenario';
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
 interface Booking {
@@ -11,80 +17,48 @@ interface Booking {
 }
 
 interface AppContextType {
+  currentDay: ScenarioDay;
+  setCurrentDay: (day: ScenarioDay) => void;
   currentClient: Client;
-  setCurrentClient: (client: Client) => void;
-  clients: Client[];
-  updateClientProfile: (profile: Client['functionalProfile']) => void;
-  bookService: (service: Service) => void;
+  recommendations: RecommendedService[];
   bookings: Booking[];
+  alerts: ScenarioAlert[];
+  changelog: string[];
+  bookService: (service: Service) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [currentClient, setCurrentClientState] = useState<Client>(defaultClient);
-  const [allClients, setAllClients] = useState<Client[]>(clients);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [currentDay, setCurrentDay] = useState<ScenarioDay>(1);
 
-  const setCurrentClient = useCallback((client: Client) => {
-    setCurrentClientState(client);
+  const scenario = getScenarioState(currentDay);
+
+  const bookService = useCallback((_service: Service) => {
+    // In scenario mode, bookings are driven by the timeline
+    // Advance to day 3 to show the booking
+    setCurrentDay(3);
   }, []);
 
-  const updateClientProfile = useCallback((profile: Client['functionalProfile']) => {
-    setCurrentClientState(prev => ({
-      ...prev,
-      functionalProfile: profile,
-    }));
-    setAllClients(prev =>
-      prev.map(c => c.id === currentClient.id ? { ...c, functionalProfile: profile } : c)
-    );
-  }, [currentClient.id]);
-
-  const bookService = useCallback((service: Service) => {
-    const newBooking: Booking = {
-      id: `booking-${Date.now()}`,
-      serviceId: service.id,
-      serviceName: service.name,
-      date: new Date().toLocaleDateString('he-IL'),
-      status: 'confirmed',
-      price: service.price,
-    };
-
-    setBookings(prev => [...prev, newBooking]);
-
-    // Update wallet balance
-    setCurrentClientState(prev => ({
-      ...prev,
-      walletBalance: prev.walletBalance - service.price,
-      walletUsed: prev.walletUsed + service.price,
-      status: (prev.walletBalance - service.price) < 500 ? 'red' :
-              (prev.walletBalance - service.price) < 1500 ? 'yellow' : 'green',
-    }));
-
-    setAllClients(prev =>
-      prev.map(c => {
-        if (c.id === currentClient.id) {
-          return {
-            ...c,
-            walletBalance: c.walletBalance - service.price,
-            walletUsed: c.walletUsed + service.price,
-            status: (c.walletBalance - service.price) < 500 ? 'red' :
-                    (c.walletBalance - service.price) < 1500 ? 'yellow' : 'green',
-          };
-        }
-        return c;
-      })
-    );
-  }, [currentClient.id]);
+  const bookings: Booking[] = scenario.bookings.map(b => ({
+    id: b.id,
+    serviceId: b.serviceId,
+    serviceName: b.serviceName,
+    date: b.date,
+    status: b.status === 'completed' ? 'confirmed' : b.status === 'in_progress' ? 'confirmed' : b.status as 'confirmed' | 'pending' | 'cancelled',
+    price: b.price,
+  }));
 
   return (
     <AppContext.Provider value={{
-      currentClient,
-      setCurrentClient,
-      clients: allClients,
-      updateClientProfile,
-      bookService,
+      currentDay,
+      setCurrentDay,
+      currentClient: scenario.sarah,
+      recommendations: scenario.recommendations,
       bookings,
+      alerts: scenario.alerts,
+      changelog: scenario.changelog,
+      bookService,
     }}>
       {children}
     </AppContext.Provider>

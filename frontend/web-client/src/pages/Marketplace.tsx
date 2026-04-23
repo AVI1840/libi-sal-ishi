@@ -1,4 +1,4 @@
-import { cn, getRecommendations } from '@libi/shared-ui';
+import { cn } from '@libi/shared-ui';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { BottomNav } from '../components/BottomNav';
@@ -16,14 +16,14 @@ const categories = [
 ];
 
 export default function Marketplace() {
-  const { currentClient } = useApp();
+  const { recommendations } = useApp();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
-  const recommendations = getRecommendations(currentClient, 30);
+  const visible = recommendations.filter(s => !s.filteredOut);
 
   const filteredServices = useMemo(() => {
-    return recommendations.filter(service => {
+    return visible.filter(service => {
       const matchesSearch = search === '' ||
         service.name.includes(search) ||
         service.shortDesc.includes(search) ||
@@ -31,7 +31,9 @@ export default function Marketplace() {
       const matchesCategory = category === 'all' || service.category === category;
       return matchesSearch && matchesCategory;
     });
-  }, [recommendations, search, category]);
+  }, [visible, search, category]);
+
+  const filteredOut = recommendations.filter(s => s.filteredOut);
 
   return (
     <div className="page-container">
@@ -72,7 +74,7 @@ export default function Marketplace() {
         </div>
 
         {/* Results Count */}
-        <p className="text-muted-foreground">{filteredServices.length} שירותים נמצאו</p>
+        <p className="text-muted-foreground">{filteredServices.length} שירותים מומלצים</p>
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,6 +82,23 @@ export default function Marketplace() {
             <ServiceCard key={service.id} service={service} />
           ))}
         </div>
+
+        {/* Filtered out services */}
+        {filteredOut.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-border">
+            <p className="text-sm text-muted-foreground mb-3">
+              🚫 {filteredOut.length} שירותים סוננו (לא מתאימים לפרופיל התפקודי)
+            </p>
+            <div className="space-y-2">
+              {filteredOut.map((service) => (
+                <div key={service.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-xl opacity-60">
+                  <span className="text-sm">{service.name}</span>
+                  <span className="text-xs text-red-500">{service.filterReason}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       <BottomNav />

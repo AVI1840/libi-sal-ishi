@@ -1,4 +1,6 @@
-import { Button, services } from '@libi/shared-ui';
+import { Button } from '@libi/shared-ui';
+import { DecisionExplainer } from '@libi/shared-ui/components/DecisionExplainer';
+import { RECOMMENDATION_TYPE_LABELS } from '@libi/shared-ui/data/scenario';
 import { Calendar, Check, Clock, MapPin, Star, Users } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -9,9 +11,9 @@ import { useApp } from '../contexts/AppContext';
 export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { bookService, currentClient } = useApp();
+  const { bookService, currentClient, recommendations } = useApp();
 
-  const service = services.find(s => s.id === id);
+  const service = recommendations.find(s => s.id === id);
 
   if (!service) {
     return (
@@ -25,14 +27,19 @@ export default function ServiceDetails() {
     );
   }
 
+  const subsidyInfo = service.explanation?.subsidyBreakdown;
+  const displayPrice = subsidyInfo ? subsidyInfo.finalPrice : service.price;
+  const recType = service.explanation?.type;
+  const typeInfo = recType ? RECOMMENDATION_TYPE_LABELS[recType] : null;
+  const normalizedScore = service.explanation?.score;
+
   const handleBook = () => {
-    if (currentClient.walletBalance < service.price) {
+    if (currentClient.walletBalance < 1) {
       toast.error('אין מספיק יתרה בארנק');
       return;
     }
     bookService(service);
-    toast.success('השירות נרשם בהצלחה!');
-    navigate('/');
+    toast.success('השירות נרשם בהצלחה! מעבר ליום 3...');
   };
 
   return (
@@ -47,8 +54,29 @@ export default function ServiceDetails() {
             alt={service.name}
             className="w-full h-full object-cover"
           />
-          <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full text-sm font-medium bg-success-light text-success">
-            {service.fundingSource}
+          {subsidyInfo && subsidyInfo.finalPercent > 0 && (
+            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-700">
+              {subsidyInfo.finalPercent === 100 ? 'חינם ✨' : `${subsidyInfo.finalPercent}% סבסוד`}
+            </div>
+          )}
+          {/* Type + score badges */}
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            {typeInfo && (
+              <span
+                className="px-3 py-1.5 rounded-lg text-sm font-bold shadow-md"
+                style={{ background: typeInfo.bgColor, color: typeInfo.color, border: `1px solid ${typeInfo.color}33` }}
+              >
+                {typeInfo.emoji} {typeInfo.label}
+              </span>
+            )}
+            {normalizedScore !== undefined && (
+              <span
+                className="px-3 py-1.5 rounded-lg text-sm font-bold shadow-md"
+                style={{ background: '#1B3A5C', color: '#fff', fontFamily: 'monospace' }}
+              >
+                {normalizedScore.toFixed(2)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -74,6 +102,13 @@ export default function ServiceDetails() {
               </div>
             </div>
           </div>
+
+          {/* Decision Explanation */}
+          {service.explanation && (
+            <div className="animate-slide-up">
+              <DecisionExplainer explanation={service.explanation} />
+            </div>
+          )}
 
           {/* Description */}
           <div className="bg-card rounded-2xl p-5 shadow-soft animate-slide-up">
@@ -115,12 +150,15 @@ export default function ServiceDetails() {
               <div>
                 <p className="text-white/70 text-sm">מחיר</p>
                 <p className="text-3xl font-bold">
-                  {service.price === 0 ? 'חינם' : `₪${service.price}`}
+                  {displayPrice === 0 ? 'חינם ✨' : `₪${displayPrice}`}
                 </p>
+                {subsidyInfo && subsidyInfo.finalPercent > 0 && displayPrice !== service.price && (
+                  <p className="text-white/50 text-sm line-through">₪{service.price}</p>
+                )}
               </div>
               <div className="text-left">
                 <p className="text-white/70 text-sm">יתרה בארנק</p>
-                <p className="text-xl font-bold">₪{currentClient.walletBalance.toLocaleString()}</p>
+                <p className="text-xl font-bold">{currentClient.walletBalance} יחידות</p>
               </div>
             </div>
 
