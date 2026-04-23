@@ -3,152 +3,342 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LIBI — סל אישי For You</title>
+  <title>LIBI — סל אישי בסיעוד</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Heebo', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      background: #0f172a;
       min-height: 100vh;
       color: #f8fafc;
       direction: rtl;
     }
-    .container { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
-    .hero { text-align: center; margin-bottom: 60px; }
-    .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 12px; }
-    .hero h1 span { color: #60a5fa; }
-    .hero .subtitle { font-size: 1.3rem; color: #94a3b8; margin-bottom: 8px; }
-    .hero .badge {
-      display: inline-block;
-      background: rgba(251, 146, 60, 0.15);
-      color: #fb923c;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-top: 16px;
+
+    /* Header */
+    .header {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      max-width: 1100px;
+      margin: 0 auto;
     }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 60px; }
+    .header .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.85rem; color: #fff;
+    }
+    .header .logo-text { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; }
+    .header .badge {
+      background: rgba(251,146,60,0.12);
+      color: #fb923c;
+      padding: 4px 14px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Container */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 60px 0 48px;
+    }
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .hero h1 span { color: #60a5fa; }
+    .hero .subtitle {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto 20px;
+      line-height: 1.6;
+    }
+    .hero .org {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 768px) {
+      .cards { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+    }
     .card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 32px 28px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px 24px;
       transition: all 0.3s;
       text-decoration: none;
       color: inherit;
-      display: block;
+      display: flex;
+      flex-direction: column;
     }
     .card:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: #60a5fa;
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(96,165,250,0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.2);
     }
-    .card .icon { font-size: 2.5rem; margin-bottom: 16px; }
-    .card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
-    .card .role { color: #60a5fa; font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; }
-    .card p { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; }
-    .card .features { list-style: none; padding: 0; }
-    .card .features li { color: #cbd5e1; font-size: 0.85rem; padding: 4px 0; }
+    .card .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .card .icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .card .icon.blue { background: rgba(59,130,246,0.15); }
+    .card .icon.green { background: rgba(34,197,94,0.15); }
+    .card .icon.purple { background: rgba(139,92,246,0.15); }
+    .card h2 { font-size: 1.15rem; font-weight: 700; }
+    .card .role { color: #64748b; font-size: 0.75rem; font-weight: 500; }
+    .card p {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      flex: 1;
+    }
+    .card .features { list-style: none; padding: 0; margin-bottom: 18px; }
+    .card .features li {
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      padding: 3px 0;
+    }
     .card .features li::before { content: "✓ "; color: #34d399; font-weight: bold; }
     .card .cta {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 10px 24px;
+      display: block;
+      text-align: center;
+      padding: 10px 20px;
       background: #1d4ed8;
       color: white;
-      border-radius: 12px;
+      border-radius: 10px;
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       transition: background 0.2s;
     }
     .card:hover .cta { background: #2563eb; }
-    .info { text-align: center; margin-bottom: 40px; }
-    .info h3 { font-size: 1.2rem; color: #94a3b8; font-weight: 400; margin-bottom: 24px; }
-    .stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
-    .stat { text-align: center; }
-    .stat .num { font-size: 2rem; font-weight: 800; color: #60a5fa; }
-    .stat .label { font-size: 0.85rem; color: #64748b; }
-    .footer { text-align: center; padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.08); }
-    .footer p { color: #475569; font-size: 0.85rem; }
-    .footer a { color: #60a5fa; text-decoration: none; }
-    .github-link {
-      display: inline-flex; align-items: center; gap: 8px;
-      color: #94a3b8; text-decoration: none; font-size: 0.9rem;
-      margin-top: 12px; transition: color 0.2s;
+
+    /* Stats */
+    .stats-section {
+      padding: 36px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 36px;
     }
-    .github-link:hover { color: #f8fafc; }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat .num { font-size: 1.8rem; font-weight: 800; color: #60a5fa; }
+    .stat .label { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+
+    /* How it works */
+    .how-section {
+      margin-bottom: 48px;
+    }
+    .how-section h3 {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 24px;
+    }
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .step {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 20px 18px;
+      text-align: center;
+      width: 180px;
+    }
+    .step .step-num {
+      width: 28px; height: 28px;
+      background: #1d4ed8;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: #fff;
+      margin: 0 auto 10px;
+    }
+    .step .step-title { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+    .step .step-desc { font-size: 0.72rem; color: #64748b; line-height: 1.5; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 32px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer p { color: #475569; font-size: 0.8rem; }
+    .footer a { color: #60a5fa; text-decoration: none; }
+    .footer .github {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #94a3b8; font-size: 0.8rem; margin-bottom: 12px;
+      text-decoration: none;
+    }
+    .footer .github:hover { color: #e2e8f0; }
   </style>
 </head>
 <body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">לב</div>
+      <span class="logo-text">LIBI — סל אישי בסיעוד</span>
+    </div>
+    <span class="badge">⚡ דמו אסטרטגי</span>
+  </div>
+
   <div class="container">
+    <!-- Hero -->
     <div class="hero">
-      <h1>LIBI — <span>סל אישי</span> For You</h1>
-      <p class="subtitle">מערכת הפעלה לזכויות ושירותים לאזרח הוותיק</p>
-      <div class="badge">⚡ דמו אסטרטגי — הוכחת היתכנות</div>
+      <h1>מערכת <span>סל אישי</span> בסיעוד</h1>
+      <p class="subtitle">
+        המרת שעות סיעוד ליחידות דיגיטליות, הטיית תקציב למניעה,
+        וניהול חכם של 75+ לקוחות למתאמת שירות
+      </p>
+      <p class="org">ביטוח לאומי · מינהל גמלאות · פיילוט 2026</p>
     </div>
 
+    <!-- App Cards -->
     <div class="cards">
       <a class="card" href="https://libi-sal-ishi.vercel.app" target="_blank">
-        <div class="icon">👵</div>
-        <h2>ממשק האזרח</h2>
-        <div class="role">Web Client</div>
-        <p>הממשק שהאזרח הוותיק רואה — שיחה עם AI, גלישה בשירותים, הזמנה בקליק</p>
+        <div class="card-header">
+          <div class="icon blue">👵</div>
+          <div>
+            <h2>ממשק האזרח</h2>
+            <div class="role">Web Client</div>
+          </div>
+        </div>
+        <p>הממשק שהאזרח הוותיק רואה — שירותים מותאמים אישית, סבסוד דינמי, שיחה עם AI</p>
         <ul class="features">
-          <li>שיחה בעברית פשוטה עם AI</li>
-          <li>שוק שירותים מותאם אישית</li>
-          <li>ארנק דיגיטלי ליחידות סיעוד</li>
-          <li>קהילה ופרופיל אישי</li>
+          <li>שוק שירותים עם סבסוד אישי</li>
+          <li>שיחה בעברית עם לימור (AI)</li>
+          <li>ארנק דיגיטלי ופרופיל לב</li>
         </ul>
-        <span class="cta">פתח ממשק →</span>
+        <span class="cta">פתח ממשק אזרח →</span>
       </a>
 
       <a class="card" href="https://libi-case-manager.vercel.app" target="_blank">
-        <div class="icon">📋</div>
-        <h2>לוח בקרה למתאמת</h2>
-        <div class="role">Case Manager Dashboard</div>
-        <p>ניהול 75+ לקוחות, התראות חכמות, פעולות CRM, ו-KPIs בזמן אמת</p>
+        <div class="card-header">
+          <div class="icon green">📋</div>
+          <div>
+            <h2>לוח בקרה למתאמת</h2>
+            <div class="role">Case Manager Dashboard</div>
+          </div>
+        </div>
+        <p>ניהול 75 לקוחות עם משימות יום, התראות חכמות, פעולות CRM, ומדדי ביצוע</p>
         <ul class="features">
-          <li>75 לקוחות עם פרופיל מלא</li>
-          <li>התראות דחופות ופעולות CRM</li>
-          <li>KPI dashboard — ניצול, מניעה, שביעות רצון</li>
-          <li>דוחות ומעקב</li>
+          <li>משימות יום לפי שעה</li>
+          <li>טבלת "דורשים תשומת לב"</li>
+          <li>KPIs — ניצול, מניעה, בדידות</li>
         </ul>
-        <span class="cta">פתח לוח בקרה →</span>
+        <span class="cta">פתח לוח מתאמת →</span>
       </a>
 
       <a class="card" href="https://libi-vendor-portal.vercel.app" target="_blank">
-        <div class="icon">🏪</div>
-        <h2>פורטל ספקים</h2>
-        <div class="role">Vendor Portal</div>
-        <p>ניהול שירותים, הזמנות ותשלומים — הצד של ספק השירות</p>
+        <div class="card-header">
+          <div class="icon purple">🏪</div>
+          <div>
+            <h2>פורטל ספקים</h2>
+            <div class="role">Vendor Portal</div>
+          </div>
+        </div>
+        <p>ניהול שירותים, אישור הזמנות, מעקב תשלומים — הצד של ספק השירות</p>
         <ul class="features">
+          <li>הזמנות חדשות מ-LIBI</li>
           <li>ניהול קטלוג שירותים</li>
-          <li>הזמנות ולוח זמנים</li>
-          <li>מעקב תשלומים</li>
-          <li>דירוגים וביקורות</li>
+          <li>מעקב הכנסות ותשלומים</li>
         </ul>
-        <span class="cta">פתח פורטל →</span>
+        <span class="cta">פתח פורטל ספקים →</span>
       </a>
     </div>
 
-    <div class="info">
-      <h3>המערכת בנויה מ-3 שירותי Backend + 3 ממשקי Frontend</h3>
-      <div class="stats">
-        <div class="stat"><div class="num">75</div><div class="label">לקוחות דמו</div></div>
-        <div class="stat"><div class="num">18</div><div class="label">שירותים בשוק</div></div>
-        <div class="stat"><div class="num">3</div><div class="label">תרחישי AI</div></div>
-        <div class="stat"><div class="num">5</div><div class="label">עולמות תוכן</div></div>
+    <!-- How it works -->
+    <div class="how-section">
+      <h3>איך זה עובד?</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title">קליטה</div>
+          <div class="step-desc">6 שאלות פשוטות → פרופיל תפקודי + פרסונה</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title">המלצה</div>
+          <div class="step-desc">מנוע חכם מדרג שירותים לפי התאמה אישית</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title">סבסוד</div>
+          <div class="step-desc">שירותי מניעה = חינם. שירותי בית = 80%</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-title">הזמנה</div>
+          <div class="step-desc">אזרח בוחר → יחידות מוקפאות → ספק מאשר</div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-title">מעקב</div>
+          <div class="step-desc">CRM מייצר פעולות יומיות למתאמת</div>
+        </div>
       </div>
     </div>
 
+    <!-- Stats -->
+    <div class="stats-section">
+      <div class="stats">
+        <div class="stat"><div class="num">75</div><div class="label">לקוחות דמו</div></div>
+        <div class="stat"><div class="num">18</div><div class="label">שירותים בשוק</div></div>
+        <div class="stat"><div class="num">5</div><div class="label">עולמות תוכן</div></div>
+        <div class="stat"><div class="num">10</div><div class="label">כללי החלטה</div></div>
+        <div class="stat"><div class="num">3</div><div class="label">ממשקים</div></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
     <div class="footer">
-      <a class="github-link" href="https://github.com/AVI1840/libi-sal-ishi" target="_blank">
-        📂 GitHub Repository — קוד מקור, תיעוד, והוראות הרצה
+      <a class="github" href="https://github.com/AVI1840/libi-sal-ishi" target="_blank">
+        📂 GitHub — קוד מקור ותיעוד
       </a>
-      <p style="margin-top: 16px;">LIBI — כי כל אזרח ותיק ראוי לקבל את מה שמגיע לו</p>
+      <p>LIBI — כי כל אזרח ותיק ראוי לקבל את מה שמגיע לו</p>
     </div>
   </div>
 </body>
