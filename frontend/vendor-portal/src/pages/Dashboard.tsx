@@ -1,128 +1,108 @@
-import { Badge } from "@libi/shared-ui/components/ui/badge";
-import { Button } from "@libi/shared-ui/components/ui/button";
-import {
-  ArrowLeftCircle,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  MapPin,
-  Package,
-  Phone,
-  Star,
-  TrendingUp,
-  User,
-} from "lucide-react";
+import { Calendar, CheckCircle2, Clock, CreditCard, MapPin, Package, Phone, Star, TrendingUp, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "../lib/utils";
+import { VendorLayout } from "../components/VendorLayout";
 import { useApp } from "../contexts/AppContext";
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", minimumFractionDigits: 0 }).format(n);
+
+// Scenario bookings from LIBI
+const LIBI_BOOKINGS = [
+  { id: "lb1", service: "מועדון צהריים חברתי", client: "שרה כהן", date: "יום שלישי", time: "12:00", status: "confirmed" as const, units: 1 },
+  { id: "lb2", service: "סדנת ציור ויצירה",    client: "שרה כהן", date: "יום ראשון",  time: "10:00", status: "pending"   as const, units: 1 },
+];
+
+function StatCard({ icon: Icon, label, value, sub, tone }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; value: string; sub: string;
+  tone: "success" | "warning" | "primary" | "info";
+}) {
+  const toneMap = {
+    success: "bg-success-soft text-success",
+    warning: "bg-warning-soft text-warning-foreground",
+    primary: "bg-primary-soft text-primary",
+    info:    "bg-info-soft text-info",
+  };
+  return (
+    <div className="libi-stat-card">
+      <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", toneMap[tone])}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="text-2xl font-bold text-foreground tracking-tight">{value}</div>
+      <div className="text-sm text-foreground mt-0.5">{label}</div>
+      <div className="text-xs text-muted-foreground mt-1">{sub}</div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const {
-    vendor,
-    services,
-    bookings,
-    totalEarnings,
-    pendingEarnings,
-    completedBookingsCount,
-  } = useApp();
+  const { vendor, services, bookings, totalEarnings, pendingEarnings, completedBookingsCount } = useApp();
 
   const activeServices = services.filter((s) => s.isActive).length;
-  const pendingBookings = bookings.filter((b) => b.status === "pending");
-  const confirmedBookings = bookings.filter((b) => b.status === "confirmed");
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("he-IL", { style: "currency", currency: "ILS", minimumFractionDigits: 0 }).format(amount);
-
-  // Sarah's bookings (scenario-driven)
-  const sarahBookings = [
-    { id: 'sb-1', service: 'מועדון צהריים חברתי', client: 'שרה כהן', date: 'יום שלישי', time: '12:00', status: 'confirmed' as const, units: 1 },
-    { id: 'sb-2', service: 'סדנת ציור ויצירה', client: 'שרה כהן', date: 'יום ראשון', time: '10:00', status: 'pending' as const, units: 1 },
-  ];
+  const upcomingBookings = bookings
+    .filter((b) => b.status === "confirmed" || b.status === "pending")
+    .slice(0, 5);
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1200px] mx-auto" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-xl font-bold text-gray-900">{vendor.name}</h1>
-            <div className="flex items-center gap-1 text-sm">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              <span className="font-medium">{vendor.rating}</span>
-            </div>
-            {vendor.isVerified && (
-              <Badge className="bg-green-100 text-green-700 text-xs">✓ מאומת</Badge>
-            )}
-          </div>
-          <p className="text-gray-500 text-sm flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5" />
-            {vendor.serviceAreas.join(', ')}
-          </p>
-        </div>
-        <div className="text-xs text-gray-400 bg-gray-100 px-3 py-1.5 rounded-lg">
-          {new Date().toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </div>
-      </div>
-
+    <VendorLayout
+      title={`שלום, ${vendor.contactName || vendor.name} 👋`}
+      subtitle={`${new Date().toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" })} · ${vendor.serviceAreas.join(", ")}`}
+    >
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'הכנסות', value: formatCurrency(totalEarnings), icon: CreditCard, color: 'text-green-600 bg-green-50', sub: 'סה"כ' },
-          { label: 'צפוי', value: formatCurrency(pendingEarnings), icon: Clock, color: 'text-amber-600 bg-amber-50', sub: 'ממתין לתשלום' },
-          { label: 'שירותים', value: `${activeServices}`, icon: Package, color: 'text-blue-600 bg-blue-50', sub: 'פעילים' },
-          { label: 'הושלמו', value: `${completedBookingsCount}`, icon: CheckCircle2, color: 'text-purple-600 bg-purple-50', sub: 'שירותים' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.color}`}>
-                <stat.icon className="w-4 h-4" />
-              </div>
-              <span className="text-xs text-gray-500">{stat.label}</span>
-            </div>
-            <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-xs text-gray-400">{stat.sub}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard icon={CreditCard}   label="הכנסות"   value={fmt(totalEarnings)}        sub='סה"כ שולם'          tone="success" />
+        <StatCard icon={Clock}        label="ממתין"     value={fmt(pendingEarnings)}       sub="ממתין לתשלום"       tone="warning" />
+        <StatCard icon={Package}      label="שירותים"   value={`${activeServices}`}        sub="פעילים בקטלוג"      tone="primary" />
+        <StatCard icon={CheckCircle2} label="הושלמו"    value={`${completedBookingsCount}`} sub="שירותים השבוע"     tone="info"    />
       </div>
 
+      {/* 3+2 grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* LEFT: Bookings (3 cols) */}
+
+        {/* LEFT — LIBI bookings + upcoming */}
         <div className="lg:col-span-3 space-y-6">
 
-          {/* New bookings from LIBI */}
-          <div className="bg-white rounded-xl border border-blue-100 p-5">
+          {/* New from LIBI */}
+          <div className="libi-card p-5 border-info/30 bg-info-soft/20">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-info animate-pulse-soft" />
                 הזמנות חדשות מ-LIBI
               </h2>
-              <Badge className="bg-blue-50 text-blue-700 text-xs">{sarahBookings.length} חדשות</Badge>
+              <span className="libi-chip bg-info-soft text-info">{LIBI_BOOKINGS.length} חדשות</span>
             </div>
             <div className="space-y-3">
-              {sarahBookings.map((booking) => (
-                <div key={booking.id} className={`p-4 rounded-lg border ${
-                  booking.status === 'pending' ? 'bg-amber-50/50 border-amber-100' : 'bg-green-50/50 border-green-100'
-                }`}>
-                  <div className="flex items-center justify-between mb-2">
+              {LIBI_BOOKINGS.map((b) => (
+                <div key={b.id} className={cn(
+                  "p-4 rounded-xl border",
+                  b.status === "pending"
+                    ? "bg-warning-soft/50 border-warning/20"
+                    : "bg-success-soft/50 border-success/20"
+                )}>
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-gray-900">{booking.service}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                        <span className="flex items-center gap-1"><User className="w-3 h-3" />{booking.client}</span>
-                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{booking.date}</span>
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{booking.time}</span>
+                      <p className="font-semibold text-foreground">{b.service}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5">
+                        <span className="flex items-center gap-1"><User className="w-3 h-3" />{b.client}</span>
+                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{b.date}</span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{b.time}</span>
                       </div>
                     </div>
-                    <div className="text-left">
-                      <Badge className={booking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}>
-                        {booking.status === 'pending' ? 'ממתין לאישור' : '✓ מאושר'}
-                      </Badge>
-                      <p className="text-xs text-gray-400 mt-1">{booking.units} יחידות</p>
-                    </div>
+                    <span className={cn("libi-chip shrink-0",
+                      b.status === "pending" ? "bg-warning-soft text-warning-foreground" : "bg-success-soft text-success"
+                    )}>
+                      {b.status === "pending" ? "ממתין לאישור" : "✓ מאושר"}
+                    </span>
                   </div>
-                  {booking.status === 'pending' && (
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-amber-100">
-                      <Button size="sm" className="flex-1 h-8 text-xs">אשר הזמנה</Button>
-                      <Button size="sm" variant="outline" className="h-8 text-xs text-red-600 border-red-200">דחה</Button>
+                  {b.status === "pending" && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-warning/20">
+                      <button className="flex-1 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-glow transition-colors">
+                        אשר הזמנה
+                      </button>
+                      <button className="px-4 h-8 rounded-lg border border-border text-xs font-medium text-destructive hover:bg-destructive-soft transition-colors">
+                        דחה
+                      </button>
                     </div>
                   )}
                 </div>
@@ -130,114 +110,129 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Existing bookings */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
+          {/* Upcoming bookings */}
+          <div className="libi-card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900">הזמנות קרובות</h2>
-              <Link to="/bookings" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                כל ההזמנות <ArrowLeftCircle className="w-3 h-3" />
-              </Link>
+              <h2 className="text-base font-semibold text-foreground">הזמנות קרובות</h2>
+              <Link to="/bookings" className="text-xs font-medium text-primary hover:underline">כל ההזמנות →</Link>
             </div>
-            <div className="space-y-2">
-              {confirmedBookings.length === 0 && pendingBookings.length === 0 ? (
-                <p className="text-gray-400 text-center py-6 text-sm">אין הזמנות קרובות</p>
-              ) : (
-                [...pendingBookings, ...confirmedBookings].slice(0, 5).map((booking) => {
-                  const date = new Date(booking.scheduledDate);
+            {upcomingBookings.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">אין הזמנות קרובות</p>
+            ) : (
+              <div className="space-y-1">
+                {upcomingBookings.map((b) => {
+                  const date = new Date(b.scheduledDate);
                   return (
-                    <div key={booking.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 flex flex-col items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-gray-900">{date.getDate()}</span>
-                        <span className="text-[10px] text-gray-400">{date.toLocaleDateString("he-IL", { month: "short" })}</span>
+                    <div key={b.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/40 transition-colors">
+                      <div className="w-12 h-12 rounded-xl bg-muted flex flex-col items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-foreground leading-none">{date.getDate()}</span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5">
+                          {date.toLocaleDateString("he-IL", { month: "short" })}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{booking.serviceName}</p>
-                        <p className="text-xs text-gray-400">{date.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}</p>
+                        <p className="text-sm font-medium text-foreground">{b.serviceName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {date.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
                       </div>
-                      <Badge className={`text-xs ${
-                        booking.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                        booking.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>
-                        {booking.status === 'pending' ? 'ממתין' : booking.status === 'confirmed' ? 'מאושר' : 'הושלם'}
-                      </Badge>
+                      <span className={cn("libi-chip",
+                        b.status === "pending"   ? "bg-warning-soft text-warning-foreground" :
+                        b.status === "confirmed" ? "bg-info-soft text-info" :
+                        "bg-success-soft text-success"
+                      )}>
+                        {b.status === "pending" ? "ממתין" : b.status === "confirmed" ? "מאושר" : "הושלם"}
+                      </span>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* RIGHT: Services + Earnings (2 cols) */}
+        {/* RIGHT — earnings + services + contact */}
         <div className="lg:col-span-2 space-y-6">
 
-          {/* Earnings */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">הכנסות</h2>
-            <div className="text-center mb-4">
-              <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalEarnings)}</p>
-              <p className="text-xs text-gray-400 mt-1">מתוך {completedBookingsCount} שירותים</p>
+          {/* Earnings summary */}
+          <div className="libi-card p-5">
+            <h2 className="text-base font-semibold text-foreground mb-4">הכנסות החודש</h2>
+            <div className="text-center py-4">
+              <div className="text-4xl font-bold text-foreground tracking-tight">{fmt(totalEarnings)}</div>
+              <div className="text-xs text-muted-foreground mt-1">מתוך {completedBookingsCount} שירותים</div>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">עמלת פלטפורמה (7%)</span>
-                <span className="text-gray-700">{formatCurrency(totalEarnings * 0.07)}</span>
+            <div className="space-y-2 text-sm pt-4 border-t border-border">
+              <div className="flex justify-between text-muted-foreground">
+                <span>עמלת פלטפורמה (7%)</span>
+                <span>{fmt(totalEarnings * 0.07)}</span>
               </div>
-              <div className="flex justify-between pt-2 border-t border-gray-100">
-                <span className="font-medium text-gray-900">נטו</span>
-                <span className="font-bold text-green-600">{formatCurrency(totalEarnings * 0.93)}</span>
+              <div className="flex justify-between font-semibold text-foreground pt-1 border-t border-border">
+                <span>נטו לקבל</span>
+                <span className="text-success">{fmt(totalEarnings * 0.93)}</span>
               </div>
             </div>
             <Link to="/payments">
-              <button className="w-full mt-4 py-2 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-100">
+              <button className="w-full mt-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">
                 פרטי תשלומים
               </button>
             </Link>
           </div>
 
-          {/* My Services */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
+          {/* Services list */}
+          <div className="libi-card p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900">השירותים שלי</h2>
-              <Link to="/services" className="text-xs text-blue-600 hover:underline">ניהול →</Link>
+              <h2 className="text-base font-semibold text-foreground">השירותים שלי</h2>
+              <Link to="/services" className="text-xs font-medium text-primary hover:underline">ניהול →</Link>
             </div>
-            <div className="space-y-2">
-              {services.slice(0, 5).map((service, i) => (
-                <div key={service.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+            <div className="space-y-1">
+              {services.slice(0, 5).map((s, i) => (
+                <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors">
+                  <span className="w-6 h-6 rounded-md bg-primary-soft text-primary text-xs font-bold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{service.title}</p>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-gray-900">{service.unitCost} יח׳</p>
-                  </div>
-                  <Badge className={service.isActive ? 'bg-green-50 text-green-700 text-[10px]' : 'bg-gray-100 text-gray-500 text-[10px]'}>
-                    {service.isActive ? 'פעיל' : 'מוסתר'}
-                  </Badge>
+                  <span className="flex-1 text-sm font-medium text-foreground truncate">{s.title}</span>
+                  <span className="text-xs font-bold text-foreground tabular-nums">{s.unitCost} יח׳</span>
+                  <span className={cn("libi-chip text-[10px]",
+                    s.isActive ? "bg-success-soft text-success" : "bg-muted text-muted-foreground"
+                  )}>
+                    {s.isActive ? "פעיל" : "מוסתר"}
+                  </span>
                 </div>
               ))}
             </div>
             <Link to="/services/new">
-              <button className="w-full mt-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+              <button className="w-full mt-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-glow transition-colors">
                 + שירות חדש
               </button>
             </Link>
           </div>
 
-          {/* Contact info */}
-          <div className="bg-gray-50 rounded-xl border border-gray-100 p-4">
-            <p className="text-xs text-gray-500 mb-2">פרטי קשר</p>
-            <div className="space-y-1.5 text-sm">
-              {vendor.contactName && <p className="text-gray-700 flex items-center gap-2"><User className="w-3.5 h-3.5 text-gray-400" />{vendor.contactName}</p>}
-              {vendor.phone && <p className="text-gray-700 flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-400" />{vendor.phone}</p>}
-              {vendor.email && <p className="text-gray-700 flex items-center gap-2 text-xs">{vendor.email}</p>}
+          {/* Contact */}
+          <div className="libi-card p-4 bg-muted/30">
+            <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">פרטי קשר</p>
+            <div className="space-y-2 text-sm">
+              {vendor.contactName && (
+                <div className="flex items-center gap-2 text-foreground/80">
+                  <User className="w-3.5 h-3.5 text-muted-foreground" />
+                  {vendor.contactName}
+                </div>
+              )}
+              {vendor.phone && (
+                <div className="flex items-center gap-2 text-foreground/80">
+                  <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span dir="ltr">{vendor.phone}</span>
+                </div>
+              )}
+              {vendor.serviceAreas.length > 0 && (
+                <div className="flex items-start gap-2 text-foreground/80">
+                  <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5" />
+                  <span>{vendor.serviceAreas.join(", ")}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </VendorLayout>
   );
 }

@@ -1,386 +1,207 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@libi/shared-ui/components/ui/avatar";
-import { Badge } from "@libi/shared-ui/components/ui/badge";
-import { Button } from "@libi/shared-ui/components/ui/button";
-import { Input } from "@libi/shared-ui/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@libi/shared-ui/components/ui/tabs";
-import { Bell, Building2, Mail, MapPin, Phone, Save, Shield, User } from "lucide-react";
+import { Bell, Building2, Globe, Lock, Mail, MapPin, Phone, Save, Shield, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "../lib/utils";
+import { VendorLayout } from "../components/VendorLayout";
 import { useApp } from "../contexts/AppContext";
+
+const inputCls = "w-full h-10 px-3 rounded-lg border border-border bg-card text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors";
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div>
+    <label className="block text-sm font-medium text-foreground mb-1.5">{label}</label>
+    {children}
+  </div>
+);
+
+const SECTIONS = [
+  { id: "business",       icon: Building2, label: "פרטי עסק" },
+  { id: "notifications",  icon: Bell,      label: "התראות" },
+  { id: "security",       icon: Shield,    label: "אבטחה" },
+] as const;
+
+type Section = typeof SECTIONS[number]["id"];
 
 export default function Settings() {
   const { vendor } = useApp();
+  const [section, setSection] = useState<Section>("business");
 
   const [business, setBusiness] = useState({
-    name: vendor.name,
-    contactName: vendor.contactName || "ישראל ישראלי",
-    email: vendor.email || "info@vendor.co.il",
-    phone: vendor.phone || "03-1234567",
+    name:         vendor.name,
+    contactName:  vendor.contactName || "ישראל ישראלי",
+    email:        vendor.email       || "info@vendor.co.il",
+    phone:        vendor.phone       || "03-1234567",
     licenseNumber: vendor.licenseNumber || "12345",
-    description: "ספק שירותי סיעוד ורווחה איכותיים",
+    description:  "ספק שירותי סיעוד ורווחה איכותיים",
   });
 
-  const [notifications, setNotifications] = useState({
-    newBookings: true,
-    bookingReminders: true,
+  const [notifs, setNotifs] = useState({
+    newBookings:          true,
+    bookingReminders:     true,
     paymentNotifications: true,
-    weeklyReport: false,
+    weeklyReport:         false,
   });
-
-  const handleSaveBusiness = () => {
-    toast.success("פרטי העסק נשמרו בהצלחה");
-  };
-
-  const handleSaveNotifications = () => {
-    toast.success("הגדרות ההתראות נשמרו");
-  };
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">הגדרות</h1>
-        <p className="text-gray-500 mt-1">נהל את פרטי העסק וההעדפות</p>
-      </div>
+    <VendorLayout title="הגדרות" subtitle="ניהול פרטי העסק וההעדפות">
+      <div className="flex gap-6 max-w-5xl">
 
-      <Tabs defaultValue="business" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="business" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            פרטי עסק
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="w-4 h-4" />
-            התראות
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <Shield className="w-4 h-4" />
-            אבטחה
-          </TabsTrigger>
-          <TabsTrigger value="profile" className="gap-2">
-            <User className="w-4 h-4" />
-            פרופיל אישי
-          </TabsTrigger>
-        </TabsList>
+        {/* Sidebar nav */}
+        <nav className="w-48 shrink-0 space-y-1">
+          {SECTIONS.map((s) => {
+            const Icon = s.icon;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSection(s.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-right",
+                  section === s.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {s.label}
+              </button>
+            );
+          })}
+        </nav>
 
-        {/* Business Tab */}
-        <TabsContent value="business">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 vendor-card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">פרטי העסק</h3>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
 
-              <div className="flex items-center gap-6 mb-8">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={vendor.logo} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                    {vendor.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <Button variant="outline" size="sm">העלאת לוגו</Button>
-                  <p className="text-xs text-gray-500 mt-2">JPG, PNG עד 5MB</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    שם העסק *
-                  </label>
-                  <Input
-                    value={business.name}
-                    onChange={(e) => setBusiness({ ...business, name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    מספר רישיון
-                  </label>
-                  <Input
-                    value={business.licenseNumber}
-                    onChange={(e) => setBusiness({ ...business, licenseNumber: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    איש קשר
-                  </label>
-                  <Input
-                    value={business.contactName}
-                    onChange={(e) => setBusiness({ ...business, contactName: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    טלפון
-                  </label>
-                  <Input
-                    value={business.phone}
-                    onChange={(e) => setBusiness({ ...business, phone: e.target.value })}
-                    dir="ltr"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    אימייל
-                  </label>
-                  <Input
-                    type="email"
-                    value={business.email}
-                    onChange={(e) => setBusiness({ ...business, email: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    תיאור העסק
-                  </label>
-                  <textarea
-                    value={business.description}
-                    onChange={(e) => setBusiness({ ...business, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-6">
-                <Button onClick={handleSaveBusiness} className="gap-2">
-                  <Save className="w-4 h-4" />
-                  שמור שינויים
-                </Button>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Service Areas */}
-              <div className="vendor-card">
-                <h4 className="font-medium text-gray-900 mb-3">אזורי שירות</h4>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.serviceAreas.map((area) => (
-                    <Badge key={area} variant="outline" className="gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {area}
-                    </Badge>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" className="w-full mt-4">
-                  עדכון אזורים
-                </Button>
-              </div>
-
-              {/* Contact Info */}
-              <div className="vendor-card">
-                <h4 className="font-medium text-gray-900 mb-3">פרטי יצירת קשר</h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Phone className="w-4 h-4" />
-                    <span dir="ltr">{business.phone}</span>
+          {section === "business" && (
+            <div className="space-y-5">
+              <div className="libi-card p-6">
+                <h3 className="text-base font-semibold text-foreground mb-5">פרטי העסק</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field label="שם העסק">
+                    <input value={business.name} onChange={(e) => setBusiness({ ...business, name: e.target.value })} className={inputCls} />
+                  </Field>
+                  <Field label="מספר רישיון">
+                    <input value={business.licenseNumber} onChange={(e) => setBusiness({ ...business, licenseNumber: e.target.value })} className={inputCls} />
+                  </Field>
+                  <Field label="איש קשר">
+                    <input value={business.contactName} onChange={(e) => setBusiness({ ...business, contactName: e.target.value })} className={inputCls} />
+                  </Field>
+                  <Field label="טלפון">
+                    <input value={business.phone} onChange={(e) => setBusiness({ ...business, phone: e.target.value })} className={inputCls} dir="ltr" />
+                  </Field>
+                  <div className="md:col-span-2">
+                    <Field label="אימייל">
+                      <input type="email" value={business.email} onChange={(e) => setBusiness({ ...business, email: e.target.value })} className={inputCls} />
+                    </Field>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    <span>{business.email}</span>
+                  <div className="md:col-span-2">
+                    <Field label="תיאור העסק">
+                      <textarea
+                        value={business.description}
+                        onChange={(e) => setBusiness({ ...business, description: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2.5 rounded-lg border border-border bg-card text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none transition-colors"
+                      />
+                    </Field>
                   </div>
                 </div>
+                <div className="flex justify-end mt-5">
+                  <button onClick={() => toast.success("פרטי העסק נשמרו")} className="flex items-center gap-2 px-5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-glow transition-colors">
+                    <Save className="w-4 h-4" /> שמור שינויים
+                  </button>
+                </div>
               </div>
 
-              {/* Verification Status */}
-              <div className="vendor-card">
-                <h4 className="font-medium text-gray-900 mb-3">סטטוס אימות</h4>
-                <div className="flex items-center gap-2">
+              {/* Service areas + verification */}
+              <div className="grid grid-cols-2 gap-5">
+                <div className="libi-card p-5">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">אזורי שירות</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {vendor.serviceAreas.map((a) => (
+                      <span key={a} className="libi-chip bg-primary-soft text-primary">
+                        <MapPin className="w-3 h-3" />{a}
+                      </span>
+                    ))}
+                  </div>
+                  <button className="w-full mt-4 py-2 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-muted transition-colors">
+                    עדכון אזורים
+                  </button>
+                </div>
+                <div className="libi-card p-5">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">סטטוס אימות</h4>
                   {vendor.isVerified ? (
-                    <Badge className="bg-green-100 text-green-700 gap-1">
-                      <Shield className="w-3 h-3" />
-                      מאומת
-                    </Badge>
+                    <span className="libi-chip bg-success-soft text-success"><Shield className="w-3.5 h-3.5" />מאומת</span>
                   ) : (
-                    <Badge className="bg-amber-100 text-amber-700 gap-1">
-                      ממתין לאימות
-                    </Badge>
+                    <span className="libi-chip bg-warning-soft text-warning-foreground">ממתין לאימות</span>
                   )}
+                  <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" /><span dir="ltr">{business.phone}</span></div>
+                    <div className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" />{business.email}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </TabsContent>
+          )}
 
-        {/* Notifications Tab */}
-        <TabsContent value="notifications">
-          <div className="vendor-card max-w-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">הגדרות התראות</h3>
+          {section === "notifications" && (
+            <div className="libi-card p-6">
+              <h3 className="text-base font-semibold text-foreground mb-5">הגדרות התראות</h3>
+              <div className="space-y-3">
+                {[
+                  { key: "newBookings",          label: "הזמנות חדשות",    desc: "קבל התראה כשמתקבלת הזמנה חדשה" },
+                  { key: "bookingReminders",     label: "תזכורות הזמנות",  desc: "קבל תזכורת לפני שירות מתוכנן" },
+                  { key: "paymentNotifications", label: "עדכוני תשלומים",  desc: "קבל התראה כשמתקבל תשלום" },
+                  { key: "weeklyReport",         label: "דוח שבועי",       desc: "קבל סיכום שבועי של הפעילות" },
+                ].map((item) => (
+                  <label key={item.key} className="flex items-center justify-between p-4 rounded-xl bg-muted/40 hover:bg-muted/60 cursor-pointer transition-colors">
+                    <div>
+                      <div className="font-medium text-foreground text-sm">{item.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={notifs[item.key as keyof typeof notifs]}
+                      onChange={(e) => setNotifs({ ...notifs, [item.key]: e.target.checked })}
+                      className="w-4 h-4 accent-primary"
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-end mt-5">
+                <button onClick={() => toast.success("הגדרות ההתראות נשמרו")} className="flex items-center gap-2 px-5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-glow transition-colors">
+                  <Save className="w-4 h-4" /> שמור
+                </button>
+              </div>
+            </div>
+          )}
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">הזמנות חדשות</p>
-                  <p className="text-sm text-gray-500">קבל התראה כשמתקבלת הזמנה חדשה</p>
+          {section === "security" && (
+            <div className="libi-card p-6 space-y-5">
+              <h3 className="text-base font-semibold text-foreground">אבטחה</h3>
+              {["סיסמה נוכחית", "סיסמה חדשה", "אימות סיסמה חדשה"].map((label) => (
+                <Field key={label} label={label}>
+                  <input type="password" placeholder="••••••••" className={inputCls} />
+                </Field>
+              ))}
+              <div className="flex justify-end">
+                <button onClick={() => toast.success("הסיסמה עודכנה")} className="flex items-center gap-2 px-5 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-glow transition-colors">
+                  <Shield className="w-4 h-4" /> עדכון סיסמה
+                </button>
+              </div>
+              <div className="pt-5 border-t border-border">
+                <h4 className="text-sm font-semibold text-foreground mb-3">אימות דו-שלבי</h4>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/40">
+                  <div>
+                    <div className="font-medium text-foreground text-sm">אימות דו-שלבי (2FA)</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">הוסף שכבת אבטחה נוספת לחשבון</div>
+                  </div>
+                  <button className="px-4 h-8 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-muted transition-colors">
+                    הפעל
+                  </button>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.newBookings}
-                  onChange={(e) =>
-                    setNotifications({ ...notifications, newBookings: e.target.checked })
-                  }
-                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">תזכורות הזמנות</p>
-                  <p className="text-sm text-gray-500">קבל תזכורת לפני שירות מתוכנן</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.bookingReminders}
-                  onChange={(e) =>
-                    setNotifications({ ...notifications, bookingReminders: e.target.checked })
-                  }
-                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">עדכוני תשלומים</p>
-                  <p className="text-sm text-gray-500">קבל התראה כשמתקבל תשלום</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.paymentNotifications}
-                  onChange={(e) =>
-                    setNotifications({ ...notifications, paymentNotifications: e.target.checked })
-                  }
-                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">דוח שבועי</p>
-                  <p className="text-sm text-gray-500">קבל סיכום שבועי של הפעילות</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifications.weeklyReport}
-                  onChange={(e) =>
-                    setNotifications({ ...notifications, weeklyReport: e.target.checked })
-                  }
-                  className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                />
               </div>
             </div>
-
-            <div className="flex justify-end mt-6">
-              <Button onClick={handleSaveNotifications} className="gap-2">
-                <Save className="w-4 h-4" />
-                שמור שינויים
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Security Tab */}
-        <TabsContent value="security">
-          <div className="vendor-card max-w-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">אבטחה</h3>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  סיסמה נוכחית
-                </label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  סיסמה חדשה
-                </label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  אימות סיסמה חדשה
-                </label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <Button className="gap-2">
-                <Shield className="w-4 h-4" />
-                עדכון סיסמה
-              </Button>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h4 className="font-medium text-gray-900 mb-4">אימות דו-שלבי</h4>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">אימות דו-שלבי (2FA)</p>
-                  <p className="text-sm text-gray-500">הוסף שכבת אבטחה נוספת לחשבון</p>
-                </div>
-                <Button variant="outline">הפעל</Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Profile Tab */}
-        <TabsContent value="profile">
-          <div className="vendor-card max-w-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">פרופיל אישי</h3>
-
-            <div className="flex items-center gap-6 mb-8">
-              <Avatar className="h-20 w-20">
-                <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                  יי
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <Button variant="outline" size="sm">העלאת תמונה</Button>
-                <p className="text-xs text-gray-500 mt-2">JPG, PNG עד 5MB</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  שם פרטי
-                </label>
-                <Input defaultValue="ישראל" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  שם משפחה
-                </label>
-                <Input defaultValue="ישראלי" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  אימייל
-                </label>
-                <Input type="email" defaultValue="israel@vendor.co.il" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  טלפון
-                </label>
-                <Input defaultValue="054-1234567" dir="ltr" />
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <Button className="gap-2">
-                <Save className="w-4 h-4" />
-                שמור שינויים
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+          )}
+        </div>
+      </div>
+    </VendorLayout>
   );
 }
