@@ -1,245 +1,78 @@
-import { Avatar, AvatarFallback } from "@libi/shared-ui/components/ui/avatar";
-import { Badge } from "@libi/shared-ui/components/ui/badge";
-import { Button } from "@libi/shared-ui/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@libi/shared-ui/components/ui/tabs";
-import {
-    Activity,
-    AlertTriangle,
-    Bell,
-    Brain,
-    CheckCircle2,
-    ChevronLeft,
-    Clock,
-    Filter,
-    Heart,
-} from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useApp } from "../contexts/AppContext";
+import AppLayout from "@/components/AppLayout";
+import { Card } from "@/components/common/Card";
+import { Chip } from "@/components/common/Chip";
+import { alerts as initialAlerts } from "@/data/mock";
+import { ALERT_SEVERITY } from "@/data/constants";
+import { CheckCircle2, BellOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Alerts() {
-  const { alerts, clients, markAlertAsRead, resolveAlert } = useApp();
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [items, setItems] = useState(initialAlerts);
 
-  const filteredAlerts = alerts.filter((alert) => {
-    if (typeFilter === "all") return true;
-    return alert.type === typeFilter;
-  });
+  const resolve = (id: string) => setItems((arr) => arr.map((a) => (a.id === id ? { ...a, resolved: true, read: true } : a)));
+  const markRead = (id: string) => setItems((arr) => arr.map((a) => (a.id === id ? { ...a, read: true } : a)));
 
-  const unreadAlerts = filteredAlerts.filter((a) => !a.isRead && !a.isResolved);
-  const resolvedAlerts = filteredAlerts.filter((a) => a.isResolved);
-  const activeAlerts = filteredAlerts.filter((a) => !a.isResolved);
-
-  const getAlertIcon = (type: string) => {
-    switch (type) {
-      case "health": return Activity;
-      case "loneliness": return Heart;
-      case "cognitive": return Brain;
-      case "emergency": return AlertTriangle;
-      default: return Bell;
-    }
-  };
-
-  const getSeverityClass = (severity: string) => {
-    switch (severity) {
-      case "critical": return "critical";
-      case "warning": return "warning";
-      default: return "info";
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "health": return "בריאות";
-      case "loneliness": return "בדידות";
-      case "cognitive": return "קוגניטיבי";
-      case "emergency": return "חירום";
-      default: return type;
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(hours / 24);
-
-    if (minutes < 60) return `לפני ${minutes} דקות`;
-    if (hours < 24) return `לפני ${hours} שעות`;
-    return `לפני ${days} ימים`;
-  };
-
-  const AlertCard = ({ alert }: { alert: typeof alerts[0] }) => {
-    const AlertIcon = getAlertIcon(alert.type);
-    const client = clients.find((c) => c.id === alert.clientId);
-
-    return (
-      <div
-        className={`dashboard-card ${
-          !alert.isRead && !alert.isResolved ? "border-red-200 bg-red-50/30" : ""
-        }`}
-      >
-        <div className="flex items-start gap-4">
-          <div className={`alert-badge ${getSeverityClass(alert.severity)} p-2`}>
-            <AlertIcon className="w-5 h-5" />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">{alert.title}</h3>
-              {!alert.isRead && !alert.isResolved && (
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-              )}
-              {alert.isResolved && (
-                <Badge className="bg-green-100 text-green-700 gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  טופל
-                </Badge>
-              )}
-            </div>
-
-            <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
-
-            <div className="flex items-center gap-4 mt-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Clock className="w-4 h-4" />
-                <span>{formatTime(alert.createdAt)}</span>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                {getTypeLabel(alert.type)}
-              </Badge>
-            </div>
-
-            {/* Client Info */}
-            {client && (
-              <Link
-                to={`/clients/${client.id}`}
-                className="flex items-center gap-3 mt-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {client.name.split(" ").map((n) => n[0]).join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{client.name}</p>
-                  <p className="text-xs text-gray-500">רמה {client.nursingLevel} • {client.city}</p>
-                </div>
-                <ChevronLeft className="w-5 h-5 text-gray-300 group-hover:text-primary" />
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Actions */}
-        {!alert.isResolved && (
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-            <Button
-              size="sm"
-              onClick={() => resolveAlert(alert.id)}
-              className="flex-1 bg-green-600 hover:bg-green-700"
-            >
-              סמן כטופל
-            </Button>
-            {!alert.isRead && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => markAlertAsRead(alert.id)}
-              >
-                סמן כנקרא
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const open = items.filter((a) => !a.resolved);
+  const resolved = items.filter((a) => a.resolved);
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">התראות</h1>
-          <p className="text-gray-500 mt-1">
-            {unreadAlerts.length > 0
-              ? `${unreadAlerts.length} התראות חדשות`
-              : "אין התראות חדשות"}
-          </p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-400" />
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
-          >
-            <option value="all">כל הסוגים</option>
-            <option value="health">בריאות</option>
-            <option value="loneliness">בדידות</option>
-            <option value="cognitive">קוגניטיבי</option>
-            <option value="emergency">חירום</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="active" className="gap-2">
-            פעילות
-            {unreadAlerts.length > 0 && (
-              <Badge variant="destructive" className="h-5 min-w-5 px-1.5">
-                {unreadAlerts.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="resolved">
-            טופלו ({resolvedAlerts.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="active">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {activeAlerts
-              .sort((a, b) => {
-                // Sort by severity first, then by date
-                const severityOrder = { critical: 0, warning: 1, info: 2 };
-                const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
-                if (severityDiff !== 0) return severityDiff;
-                return b.createdAt.getTime() - a.createdAt.getTime();
-              })
-              .map((alert) => (
-                <AlertCard key={alert.id} alert={alert} />
-              ))}
+    <AppLayout title="התראות" subtitle={`${open.length} פתוחות · ${items.filter((a) => !a.read).length} חדשות`}>
+      <div className="max-w-4xl space-y-6">
+        <section>
+          <h2 className="text-sm font-semibold text-foreground mb-3">פתוחות</h2>
+          <div className="space-y-2">
+            {open.length === 0 && <Card className="text-center py-10 text-muted-foreground text-sm">אין התראות פתוחות 🎉</Card>}
+            {open.map((a) => {
+              const sev = ALERT_SEVERITY[a.severity];
+              return (
+                <Card
+                  key={a.id}
+                  className={cn(
+                    "flex items-start gap-4 transition-colors cursor-pointer",
+                    !a.read && "border-r-4 border-r-primary"
+                  )}
+                  padded={false}
+                >
+                  <div className="flex items-start gap-4 p-4 w-full" onClick={() => markRead(a.id)}>
+                    <div className={cn("w-2.5 h-2.5 rounded-full mt-2 shrink-0", a.read ? "bg-border" : "bg-primary animate-pulse-soft")} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className={cn("libi-chip border", sev.tone)}>{sev.label}</span>
+                        <span className="text-xs text-muted-foreground">{a.createdAt}</span>
+                      </div>
+                      <div className="font-semibold text-foreground">{a.title}</div>
+                      <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">{a.description}</p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); resolve(a.id); }}
+                      className="flex items-center gap-1.5 px-3 h-8 rounded-lg bg-success text-success-foreground text-xs font-semibold hover:opacity-90 transition-opacity shrink-0"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" /> סגור
+                    </button>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
-          {activeAlerts.length === 0 && (
-            <div className="text-center py-12">
-              <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <p className="text-gray-500">אין התראות פעילות 🎉</p>
+        </section>
+
+        {resolved.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+              <BellOff className="w-4 h-4" /> נסגרו
+            </h2>
+            <div className="space-y-2 opacity-70">
+              {resolved.map((a) => (
+                <Card key={a.id} className="flex items-center gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-success" />
+                  <span className="text-sm text-muted-foreground line-through">{a.title}</span>
+                </Card>
+              ))}
             </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="resolved">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {resolvedAlerts
-              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-              .map((alert) => (
-                <AlertCard key={alert.id} alert={alert} />
-              ))}
-          </div>
-          {resolvedAlerts.length === 0 && (
-            <p className="text-gray-500 text-center py-12">אין התראות שטופלו</p>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+          </section>
+        )}
+      </div>
+    </AppLayout>
   );
 }

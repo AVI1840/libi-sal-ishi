@@ -1,328 +1,284 @@
-import { Avatar, AvatarFallback } from "@libi/shared-ui/components/ui/avatar";
-import { Badge } from "@libi/shared-ui/components/ui/badge";
-import { Button } from "@libi/shared-ui/components/ui/button";
-import { Progress } from "@libi/shared-ui/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@libi/shared-ui/components/ui/tabs";
-import { PersonaVerification } from "@libi/shared-ui/components/PersonaVerification";
-import { ICFVerification } from "@libi/shared-ui/components/ICFVerification";
-import { verifyPersona, verifyICF } from "@libi/shared-ui/lib/api";
-import {
-    Activity,
-    ArrowRight,
-    Brain,
-    Calendar,
-    Clock,
-    Ear,
-    Eye,
-    Heart,
-    MapPin,
-    Phone,
-    Plus,
-    Users,
-    Wallet,
-} from "lucide-react";
-import { Link, useParams } from "react-router-dom";
-import { useApp } from "../contexts/AppContext";
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import AppLayout from "@/components/AppLayout";
+import { Card, CardHeader } from "@/components/common/Card";
+import { Avatar } from "@/components/common/Avatar";
+import { Chip } from "@/components/common/Chip";
+import { ProgressBar } from "@/components/common/ProgressBar";
+import { getClient } from "@/data/clients";
+import { bookings } from "@/data/mock";
+import { getService } from "@/data/services";
+import { CONTENT_WORLDS, NURSING_LEVEL_TONE, PERSONA_LABELS, RISK_LABELS, BOOKING_STATUS } from "@/data/constants";
+import { Phone, MapPin, UserRound, ChevronRight, CheckCircle2, AlertCircle, Sparkles, Wallet, Activity, ClipboardList } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const TABS = [
+  { id: "functional", label: "פרופיל תפקודי", icon: Activity },
+  { id: "wallet", label: "ארנק", icon: Wallet },
+  { id: "bookings", label: "הזמנות", icon: ClipboardList },
+] as const;
 
 export default function ClientDetail() {
-  const { clientId } = useParams();
-  const { clients, bookings } = useApp();
-
-  const client = clients.find((c) => c.id === clientId);
-  const clientBookings = bookings.filter((b) => b.clientId === clientId);
+  const { id } = useParams();
+  const client = getClient(id!);
+  const [tab, setTab] = useState<typeof TABS[number]["id"]>("functional");
 
   if (!client) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-gray-500">מטופל לא נמצא</p>
-        <Link to="/clients" className="text-primary hover:underline mt-2 inline-block">
-          חזרה לרשימת מטופלים
-        </Link>
-      </div>
+      <AppLayout title="מטופל/ת לא נמצא/ה">
+        <Link to="/clients" className="text-primary hover:underline">חזרה לרשימת המטופלים</Link>
+      </AppLayout>
     );
   }
 
-  const profile = client.functionalProfile;
-
-  // Helper to convert FunctionalLevel to numeric value
-  const levelToNumber = (level: string): number => {
-    switch (level) {
-      case 'independent': return 5;
-      case 'partial': return 3;
-      case 'significant': return 1;
-      default: return 3;
-    }
-  };
-
-  const profileItems = [
-    { label: "ניידות", value: levelToNumber(profile.mobility), icon: Activity, color: "blue" },
-    { label: "קוגניציה", value: profile.cognitive, icon: Brain, color: "purple" },
-    { label: "רגשי", value: levelToNumber(profile.emotional), icon: Heart, color: "red" },
-    { label: "חברתי", value: profile.social, icon: Users, color: "green" },
-    { label: "ראייה", value: profile.vision, icon: Eye, color: "amber" },
-    { label: "שמיעה", value: profile.hearing, icon: Ear, color: "cyan" },
-  ];
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-100 text-green-700">הושלם</Badge>;
-      case "confirmed":
-        return <Badge className="bg-blue-100 text-blue-700">מאושר</Badge>;
-      case "pending":
-        return <Badge className="bg-amber-100 text-amber-700">ממתין</Badge>;
-      case "cancelled":
-        return <Badge className="bg-red-100 text-red-700">בוטל</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  const persona = PERSONA_LABELS[client.lev.persona];
+  const clientBookings = bookings.filter((b) => b.clientId === client.id).sort((a, b) => b.date.localeCompare(a.date));
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link
-          to="/clients"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowRight className="w-5 h-5 text-gray-600" />
+    <AppLayout
+      title={`${client.firstName} ${client.lastName}`}
+      subtitle={`${client.age} שנים · ${client.city} · רמת סיעוד ${client.nursingLevel}`}
+      actions={
+        <Link to="/clients" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <ChevronRight className="w-4 h-4" /> חזרה
         </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
-          <p className="text-gray-500">פרופיל מטופל</p>
-        </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          הזמנה חדשה
-        </Button>
-      </div>
-
-      {/* Main Content Grid */}
+      }
+    >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <div className="dashboard-card">
-          <div className="flex items-center gap-4 mb-6">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                {client.name.split(" ").map((n) => n[0]).join("")}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">{client.name}</h2>
-              <Badge className="mt-1 bg-primary/10 text-primary">
-                רמת סיעוד {client.nursingLevel}
-              </Badge>
+        {/* Profile card */}
+        <Card className="lg:col-span-1 h-fit">
+          <div className="flex flex-col items-center text-center pb-5 border-b border-border">
+            <Avatar name={`${client.firstName} ${client.lastName}`} size={88} tone="primary" />
+            <h2 className="text-xl font-bold text-foreground mt-3">{client.firstName} {client.lastName}</h2>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={cn("libi-chip", NURSING_LEVEL_TONE[client.nursingLevel])}>רמה {client.nursingLevel}</span>
+              {client.lev.riskFlags.slice(0, 1).map((f) => (
+                <Chip key={f} tone="destructive">{RISK_LABELS[f].icon} {RISK_LABELS[f].label}</Chip>
+              ))}
             </div>
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-gray-600">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <span>גיל {client.age}</span>
+          <div className="space-y-3 pt-5 text-sm">
+            <div className="flex items-center gap-3 text-foreground/80">
+              <UserRound className="w-4 h-4 text-muted-foreground" />
+              <span>{client.age} שנים</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <MapPin className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-3 text-foreground/80">
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               <span>{client.city}</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <Phone className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-3 text-foreground/80">
+              <Phone className="w-4 h-4 text-muted-foreground" />
               <span dir="ltr">{client.phone}</span>
             </div>
-          </div>
-
-          {/* Emergency Contact */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">איש קשר לחירום</h3>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-gray-100 text-gray-600 text-sm">
-                  {client.emergencyContact.name.split(" ").map((n) => n[0]).join("")}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {client.emergencyContact.name}
-                </p>
-                <p className="text-xs text-gray-500">{client.emergencyContact.relation}</p>
-              </div>
+            <div className="pt-4 border-t border-border">
+              <div className="text-xs text-muted-foreground mb-1.5">איש קשר לחירום</div>
+              <div className="text-sm font-medium text-foreground">{client.emergencyContact.name}</div>
+              <div className="text-xs text-muted-foreground">{client.emergencyContact.relation} · <span dir="ltr">{client.emergencyContact.phone}</span></div>
             </div>
           </div>
-        </div>
+        </Card>
 
-        {/* Tabs Section */}
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="profile">פרופיל תפקודי</TabsTrigger>
-              <TabsTrigger value="wallet">ארנק</TabsTrigger>
-              <TabsTrigger value="bookings">הזמנות</TabsTrigger>
-            </TabsList>
+        {/* Tabs */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Tab nav */}
+          <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 w-fit">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-medium transition-colors",
+                    tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Icon className="w-4 h-4" /> {t.label}
+                </button>
+              );
+            })}
+          </div>
 
-            <TabsContent value="profile" className="dashboard-card">
-              {/* ICF Verification */}
-              <div className="mb-4">
-                <ICFVerification
-                  userId={client.id}
-                  onVerify={(data) => {
-                    verifyICF(client.id, { verified: data.verified, verified_by: 'מתאמת', notes: data.notes });
-                  }}
-                />
-              </div>
-
-              {/* Persona Verification */}
-              {client.levProfile && (
-                <div className="mb-4">
-                  <PersonaVerification
-                    userId={client.id}
-                    userName={client.name}
-                    primaryPersona={client.levProfile.persona || 'independent_spirit'}
-                    secondaryPersonas={client.levProfile.secondaryPersonas || []}
-                    keyTraits={client.levProfile.keyTraits || []}
-                    engagementTips={client.levProfile.engagementTips || []}
-                    onVerify={(data) => {
-                      verifyPersona(client.id, {
-                        approved: data.approved,
-                        override_persona: data.override_persona,
-                        case_manager_notes: data.notes,
-                      });
-                    }}
-                  />
-                </div>
-              )}
-
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">מדדים תפקודיים</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {profileItems.map((item) => (
-                  <div key={item.label} className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <item.icon className={`w-5 h-5 text-${item.color}-500`} />
-                      <span className="text-sm font-medium text-gray-700">{item.label}</span>
+          {tab === "functional" && (
+            <div className="space-y-5">
+              {/* ICF verification */}
+              <Card className={cn("border-2", client.functional.verified ? "border-success/40 bg-success-soft/30" : "border-warning/40 bg-warning-soft/30")}>
+                <div className="flex items-start gap-3">
+                  {client.functional.verified ? (
+                    <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="font-semibold text-foreground text-sm">
+                      אימות פרופיל תפקודי (ICF) {client.functional.verified ? "— מאומת" : "— ממתין לאימות"}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Progress value={(item.value / 5) * 100} className="flex-1 h-2" />
-                      <span className="text-sm font-semibold text-gray-900">{item.value}/5</span>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {client.functional.verified
+                        ? "הפרופיל אומת על ידי המתאמת בתאריך 20.04.25."
+                        : "יש לאמת את הפרופיל תוך 7 ימים מהערכה הראשונית."}
+                    </p>
+                    <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer">
+                      <input type="checkbox" defaultChecked={client.functional.verified} className="w-4 h-4 accent-primary" />
+                      <span className="text-foreground">אימתתי את הפרופיל ICF</span>
+                    </label>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Persona verification */}
+              <Card>
+                <CardHeader title="פרסונת לב" subtitle="מבוסס על אינטראקציות והעדפות" />
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-primary-soft/40 border border-primary/15">
+                  <div className="w-14 h-14 rounded-xl bg-card flex items-center justify-center text-2xl shrink-0 border border-border">
+                    {persona.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-foreground">{persona.label}</div>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{persona.description}</p>
+                    <div className="mt-3 p-3 bg-card rounded-lg border border-border">
+                      <div className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" /> טיפים למעורבות
+                      </div>
+                      <ul className="space-y-1">
+                        {client.lev.engagementTips.map((tip, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex gap-2">
+                            <span className="text-primary">•</span> {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <button className="px-3 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-glow transition-colors">
+                        ✓ אישור פרסונה
+                      </button>
+                      <button className="px-3 h-8 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-colors">
+                        עריכה ידנית
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              </Card>
 
-              {/* Conditions */}
-              {client.conditions.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">מצבים רפואיים</h4>
+              {/* Functional metrics */}
+              <Card>
+                <CardHeader title="מדדים תפקודיים" subtitle="סקאלה 1-5 (5 = מצוין)" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  {([
+                    ["mobility", "ניידות"],
+                    ["cognition", "קוגניציה"],
+                    ["emotional", "רגשי"],
+                    ["social", "חברתי"],
+                    ["vision", "ראייה"],
+                    ["hearing", "שמיעה"],
+                  ] as const).map(([key, label]) => {
+                    const v = client.functional[key];
+                    return (
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm text-foreground">{label}</span>
+                          <span className="text-sm font-bold text-foreground tabular-nums">{v}/5</span>
+                        </div>
+                        <ProgressBar value={v} max={5} tone={v >= 4 ? "success" : v >= 3 ? "primary" : v >= 2 ? "warning" : "destructive"} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Card>
+                  <CardHeader title="מצבים רפואיים" />
                   <div className="flex flex-wrap gap-2">
-                    {client.conditions.map((condition) => (
-                      <Badge key={condition} variant="outline" className="text-gray-600">
-                        {condition}
-                      </Badge>
+                    {client.conditions.map((c) => (
+                      <Chip key={c} tone="muted">{c}</Chip>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Preferences */}
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">העדפות</h4>
-                <div className="flex flex-wrap gap-2">
-                  {client.preferences.map((pref) => (
-                    <Badge key={pref} className="bg-primary/10 text-primary">
-                      {pref}
-                    </Badge>
-                  ))}
-                </div>
+                </Card>
+                <Card>
+                  <CardHeader title="העדפות ותחביבים" />
+                  <div className="flex flex-wrap gap-2">
+                    {client.preferences.map((p) => (
+                      <Chip key={p} tone="primary">{p}</Chip>
+                    ))}
+                  </div>
+                </Card>
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="wallet" className="dashboard-card">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-                  <Wallet className="w-8 h-8 text-white" />
+          {tab === "wallet" && (
+            <div className="space-y-5">
+              <Card className="text-center py-8">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">יתרה זמינה</div>
+                <div className="text-6xl font-bold text-primary tabular-nums">{client.wallet.balance}</div>
+                <div className="text-sm text-muted-foreground mt-1">מתוך {client.wallet.total} יחידות</div>
+                <div className="max-w-md mx-auto mt-5">
+                  <ProgressBar value={client.wallet.balance} max={client.wallet.total} tone="primary" />
                 </div>
-                <div>
-                  <p className="text-3xl font-bold text-gray-900">{client.walletBalance}</p>
-                  <p className="text-gray-500">יחידות זמינות מתוך {client.totalUnits}</p>
-                </div>
+              </Card>
+              <div className="grid grid-cols-2 gap-5">
+                <Card>
+                  <div className="text-xs text-muted-foreground">סה״כ הקצאה</div>
+                  <div className="text-2xl font-bold text-foreground mt-1 tabular-nums">{client.wallet.total} יח׳</div>
+                </Card>
+                <Card>
+                  <div className="text-xs text-muted-foreground">נוצלו</div>
+                  <div className="text-2xl font-bold text-foreground mt-1 tabular-nums">{client.wallet.total - client.wallet.balance} יח׳</div>
+                </Card>
               </div>
-
-              <Progress
-                value={(client.walletBalance / client.totalUnits) * 100}
-                className="h-3 mb-6"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">סך הכל יחידות</p>
-                  <p className="text-xl font-bold text-gray-900">{client.totalUnits}</p>
+              <Card className="bg-success-soft/50 border-success/30">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-success text-success-foreground flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-foreground">יחידות 'הזדקנות מיטבית'</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {client.wallet.optimalAgingUnits} יחידות בונוס מותאמות לפרופיל שלך — מומלץ לנצלן עד סוף הרבעון.
+                    </p>
+                  </div>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-500">נוצלו</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {client.totalUnits - client.walletBalance}
-                  </p>
-                </div>
-              </div>
+              </Card>
+            </div>
+          )}
 
-              {/* Optimal Aging Units */}
-              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <Heart className="w-5 h-5 text-green-600" />
-                  <span className="font-medium text-green-700">יחידות הזדקנות מיטבית</span>
-                </div>
-                <p className="text-2xl font-bold text-green-700">2</p>
-                <p className="text-sm text-green-600">יחידות חובה לפעילות רווחה</p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="bookings" className="dashboard-card">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">היסטוריית הזמנות</h3>
-                <span className="text-sm text-gray-500">{clientBookings.length} הזמנות</span>
-              </div>
-
-              <div className="space-y-3">
-                {clientBookings.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">אין הזמנות</p>
-                ) : (
-                  clientBookings
-                    .sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
-                    .map((booking) => (
-                      <div
-                        key={booking.id}
-                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg"
-                      >
-                        <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 flex flex-col items-center justify-center">
-                          <span className="text-sm font-bold text-gray-900">
-                            {new Date(booking.scheduledDate).getDate()}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(booking.scheduledDate).toLocaleDateString("he-IL", { month: "short" })}
-                          </span>
+          {tab === "bookings" && (
+            <Card padded={false}>
+              {clientBookings.length === 0 ? (
+                <div className="p-10 text-center text-muted-foreground text-sm">לא קיימות הזמנות עדיין.</div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {clientBookings.map((b) => {
+                    const service = getService(b.serviceId);
+                    const status = BOOKING_STATUS[b.status];
+                    const world = CONTENT_WORLDS[service.world];
+                    const [y, m, d] = b.date.split("-");
+                    return (
+                      <div key={b.id} className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors">
+                        <div className="w-14 h-14 rounded-xl bg-muted text-foreground flex flex-col items-center justify-center shrink-0">
+                          <span className="text-lg font-bold leading-none tabular-nums">{d}</span>
+                          <span className="text-[10px] text-muted-foreground mt-0.5">{m}/{y.slice(2)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900">{booking.serviceName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Clock className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-sm text-gray-500">
-                              {new Date(booking.scheduledDate).toLocaleTimeString("he-IL", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
+                          <div className="font-semibold text-foreground">{service.name}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                            <span>{b.time}</span>
+                            <span>·</span>
+                            <span className={cn("libi-chip", world.colorClass)}>{world.emoji} {world.label}</span>
                           </div>
                         </div>
-                        <div className="text-left">
-                          {getStatusBadge(booking.status)}
-                          <p className="text-sm text-gray-500 mt-1">{booking.unitsCost} יחידות</p>
-                        </div>
+                        <span className={cn("libi-chip", status.tone)}>{status.label}</span>
+                        <div className="text-sm font-bold text-foreground tabular-nums w-16 text-left">{b.units} יח׳</div>
                       </div>
-                    ))
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          )}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

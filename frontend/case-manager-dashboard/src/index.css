@@ -2,39 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Case Manager Dashboard specific styles */
-.dashboard-card {
-  @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+/* LIBI — לב | Design System
+ * Brand: #1B3A5C (deep navy)
+ * Clean SaaS aesthetic, RTL Hebrew
+ * All colors HSL.
+ */
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    /* Brand navy #1B3A5C → hsl(212 55% 23%) */
+    --primary: 212 55% 23%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 212 55% 95%;
+    --primary-glow: 212 60% 35%;
+
+    --secondary: 210 16% 96%;
+    --secondary-foreground: 215 25% 20%;
+
+    --muted: 210 16% 96%;
+    --muted-foreground: 215 12% 45%;
+
+    --accent: 212 55% 95%;
+    --accent-foreground: 212 55% 23%;
+
+    --destructive: 0 78% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 0 80% 96%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 50% 15%;
+    --warning-soft: 45 95% 95%;
+
+    --success: 152 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --success-soft: 152 50% 94%;
+
+    --info: 212 80% 50%;
+    --info-soft: 212 80% 95%;
+
+    --border: 215 18% 92%;
+    --input: 215 18% 92%;
+    --ring: 212 55% 23%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 25%;
+    --sidebar-primary: 212 55% 23%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 212 55% 95%;
+    --sidebar-accent-foreground: 212 55% 23%;
+    --sidebar-border: 215 18% 92%;
+    --sidebar-ring: 212 55% 23%;
+  }
+
+  .dark {
+    --background: 215 30% 8%;
+    --foreground: 210 20% 96%;
+    --card: 215 28% 11%;
+    --card-foreground: 210 20% 96%;
+    --popover: 215 28% 11%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 212 70% 60%;
+    --primary-foreground: 215 30% 8%;
+    --secondary: 215 22% 16%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 215 22% 16%;
+    --muted-foreground: 215 12% 65%;
+    --accent: 215 22% 16%;
+    --accent-foreground: 210 20% 96%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 22% 18%;
+    --input: 215 22% 18%;
+    --ring: 212 70% 60%;
+  }
 }
 
-.stat-card {
-  @apply bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    direction: rtl;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Heebo', 'Assistant', system-ui, sans-serif;
+    font-feature-settings: "ss01", "kern";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Heebo', sans-serif;
+    letter-spacing: -0.01em;
+  }
 }
 
-.client-row {
-  @apply flex items-center gap-4 p-4 bg-white rounded-lg border border-gray-100 hover:border-primary/20 hover:shadow-sm transition-all cursor-pointer;
-}
+@layer components {
+  .libi-card {
+    @apply bg-card border border-border/70 rounded-xl;
+  }
 
-.alert-badge {
-  @apply inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium;
-}
+  .libi-stat-card {
+    @apply bg-card border border-border/70 rounded-xl p-5 transition-all hover:border-primary/30 hover:shadow-sm;
+  }
 
-.alert-badge.critical {
-  @apply bg-red-100 text-red-700;
-}
+  .libi-chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium;
+  }
 
-.alert-badge.warning {
-  @apply bg-amber-100 text-amber-700;
-}
-
-.alert-badge.info {
-  @apply bg-blue-100 text-blue-700;
-}
-
-.sidebar-nav-item {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer;
-}
-
-.sidebar-nav-item.active {
-  @apply bg-primary/10 text-primary font-medium;
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
 }
