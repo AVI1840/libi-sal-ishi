@@ -500,6 +500,8 @@ KPI_THRESHOLDS = {
     "loneliness_score_threshold": 4,  # Score below this triggers lonely flag
     "vendor_rating_warning": 3.5,   # Vendor rating below this triggers review
     "prevention_target_percentage": 0.6,  # Target 60% prevention services
+    "escalation_urgent_hours": 72,  # 72 hours (3 days) for URGENT escalation
+    "escalation_high_hours": 168,   # 168 hours (1 week) for HIGH escalation
 }
 
 

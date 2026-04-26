@@ -443,4 +443,51 @@ Infrastructure
 ```
 
 </div>
-מה עוד צריך וכדאי
+
+---
+
+<div dir="rtl">
+
+## 8. שיפורים שנוספו (אפריל 2026)
+
+### 8.1 שכבת API Client — חיבור Frontend ↔ Backend
+- נוצר `shared-ui/src/lib/api.ts` — wrapper לכל ה-API calls
+- תומך ב-fallback ל-mock data כשהבקאנד לא זמין
+- endpoints: intake, recommendations, subsidy, bookings, CRM, feedback, persona verification, ICF verification
+
+### 8.2 CRM Escalation — הסלמה אוטומטית (72 שעות / שבוע)
+- פעולות URGENT שלא טופלו תוך **72 שעות** → הסלמה אוטומטית למנהל רשות
+- פעולות HIGH שלא טופלו תוך **שבוע** → הסלמה אוטומטית למנהל רשות
+- `EscalationBadge` component מציג אזהרה כשמתקרבים לסף
+- `CRMEngine.check_escalations()` — לוגיקת הסלמה בבקאנד
+- KPI חדש: `escalated_this_week`, `approaching_escalation`
+
+### 8.3 אימות פרסונה ע"י מתאמת
+- `PersonaVerification` component — מוצג בפרופיל לקוח
+- מתאמת יכולה: לאשר פרסונה ✅ / לשנות פרסונה ✏️ / להוסיף הערות
+- API endpoint: `POST /api/v1/lev/persona/{user_id}/verify`
+- שדות חדשים ב-`LevProfile`: `persona_verified`, `persona_override`, `persona_verification_notes`
+
+### 8.4 Feedback Loop — משוב אחרי שירות
+- `ServiceFeedbackModal` — מוצג אחרי השלמת שירות
+- דירוג 1-5 כוכבים + תגובה חופשית + "היית ממליץ?"
+- שמירה מקומית כשאין חיבור (offline-first)
+- API endpoint: `POST /api/v1/lev/feedback`
+- מודל: `ServiceFeedback`, `ServiceFeedbackSummary`
+- KPI חדש: `average_service_rating`, `feedback_response_rate`
+
+### 8.5 אימות ICF קליני
+- `ICFVerification` component — checkbox + badge
+- מתאמת מאמתת שהפרופיל התפקודי (self-reported) מדויק
+- API endpoint: `POST /api/v1/lev/icf/{user_id}/verify`
+- שדות חדשים: `icf_verified`, `icf_verified_by`, `icf_verified_at`
+- KPI חדש: `icf_verification_rate`
+
+### 8.6 WhatsApp Channel
+- Webhook endpoints: `GET/POST /api/v1/webhooks/whatsapp/*`
+- תמיכה ב-WhatsApp Cloud API (Meta Business)
+- פרסור הודעות: text, interactive (buttons/lists), location
+- אותו orchestrator כמו web chat — רק ערוץ שונה
+- הגדרות: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_VERIFY_TOKEN`
+
+</div>

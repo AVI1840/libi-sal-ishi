@@ -6,7 +6,6 @@ and the derived data (personas, risk flags) used by the recommendation and CRM e
 """
 
 from datetime import date, datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -453,7 +452,7 @@ class LevProfile(BaseModel):
     persona: UserPersona | None = None
 
     # Demographics (from user record)
-    nursing_level: int = Field(default=1, ge=1, le=3)
+    nursing_level: int = Field(default=1, ge=1, le=6)
     has_income_supplement: bool = Field(
         default=False,
         description="Receives income supplement (affects subsidy)"
@@ -468,6 +467,28 @@ class LevProfile(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
     intake_completed: bool = False
+
+    # Verification status
+    icf_verified: bool = Field(
+        default=False,
+        description="Whether ICF profile was verified by case manager"
+    )
+    icf_verified_by: str | None = Field(
+        default=None,
+        description="Case manager who verified the ICF profile"
+    )
+    icf_verified_at: datetime | None = None
+
+    persona_verified: bool = Field(
+        default=False,
+        description="Whether persona was verified/approved by case manager"
+    )
+    persona_verified_by: str | None = None
+    persona_override: str | None = Field(
+        default=None,
+        description="Case manager override of algorithmic persona"
+    )
+    persona_verification_notes: str | None = None
 
     def refresh_computed_data(
         self,

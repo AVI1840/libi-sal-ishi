@@ -194,3 +194,113 @@ async def handle_emergency_alert(
         success=True,
         data={"message": "Emergency alert processed"},
     )
+
+
+# ===========================================
+# WhatsApp Business API Integration
+# ===========================================
+
+@router.get("/whatsapp/verify")
+async def verify_whatsapp_webhook(
+    hub_mode: str | None = None,
+    hub_verify_token: str | None = None,
+    hub_challenge: str | None = None,
+):
+    """
+    WhatsApp webhook verification (GET).
+
+    Meta sends a GET request to verify the webhook URL.
+    We must return the hub.challenge value if the verify_token matches.
+    """
+    settings = get_settings()
+    expected_token = getattr(settings, 'whatsapp_verify_token', 'libi-whatsapp-verify')
+
+    if hub_mode == "subscribe" and hub_verify_token == expected_token:
+        logger.info("WhatsApp webhook verified")
+        return int(hub_challenge) if hub_challenge else ""
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Verification failed",
+    )
+
+
+@router.post("/whatsapp/incoming")
+async def handle_whatsapp_message(request: Request):
+    """
+    Handle incoming WhatsApp messages.
+
+    Flow:
+    1. Parse incoming message from WhatsApp Business API
+    2. Identify user by phone number
+    3. Route to Limor AI agent (same as web chat)
+    4. Send response back via WhatsApp API
+
+    Message types supported:
+    - text: Regular text messages (routed to Limor)
+    - interactive: Button/list replies
+    - location: For proximity-based recommendations
+    """
+    data = await request.json()
+
+    logger.info(
+        "Received WhatsApp message",
+        data_keys=list(data.keys()),
+    )
+
+    # Parse WhatsApp Cloud API format
+    entry = data.get("entry", [{}])[0]
+    changes = entry.get("changes", [{}])[0]
+    value = changes.get("value", {})
+    messages = value.get("messages", [])
+
+    if not messages:
+        # Status update (delivered, read, etc.) — acknowledge
+        return {"status": "ok"}
+
+    message = messages[0]
+    from_phone = message.get("from", "")
+    msg_type = message.get("type", "text")
+    msg_id = message.get("id", "")
+
+    # Extract text content
+    text_content = ""
+    if msg_type == "text":
+        text_content = message.get("text", {}).get("body", "")
+    elif msg_type == "interactive":
+        interactive = message.get("interactive", {})
+        if interactive.get("type") == "button_reply":
+            text_content = interactive.get("button_reply", {}).get("title", "")
+        elif interactive.get("type") == "list_reply":
+            text_content = interactive.get("list_reply", {}).get("title", "")
+
+    if not text_content:
+        logger.info("Non-text WhatsApp message received", msg_type=msg_type)
+        return {"status": "ok"}
+
+    logger.info(
+        "Processing WhatsApp message",
+        from_phone=from_phone[-4:],  # Log only last 4 digits
+        msg_type=msg_type,
+        text_length=len(text_content),
+    )
+
+    # TODO: In production:
+    # 1. Look up user by phone number
+    # 2. Create/resume conversation with channel=WHATSAPP
+    # 3. Route through Limor AI agent (same orchestrator as web)
+    # 4. Send response via WhatsApp Cloud API:
+    #    POST https://graph.facebook.com/v18.0/{phone_number_id}/messages
+    #    { messaging_product: "whatsapp", to: from_phone, type: "text", text: { body: response } }
+
+    # For now, return acknowledgment
+    return APIResponse(
+        success=True,
+        data={
+            "message_id": msg_id,
+            "from": from_phone,
+            "channel": "whatsapp",
+            "status": "received",
+            "note": "WhatsApp integration ready — connect WhatsApp Business API to activate",
+        },
+    )

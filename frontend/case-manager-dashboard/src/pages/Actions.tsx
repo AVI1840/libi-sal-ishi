@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback } from "@libi/shared-ui/components/ui/avatar";
 import { Badge } from "@libi/shared-ui/components/ui/badge";
 import { Button } from "@libi/shared-ui/components/ui/button";
+import { EscalationBadge } from "@libi/shared-ui/components/EscalationBadge";
 import {
     CONTENT_WORLD_ICONS,
     CONTENT_WORLD_LABELS,
@@ -138,6 +139,11 @@ export default function Actions() {
                     בטיפול
                   </Badge>
                 )}
+                <EscalationBadge
+                  escalated={false}
+                  priority={action.priority}
+                  createdAt={action.createdAt}
+                />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">{action.title}</h3>
               <p className="text-gray-600">{action.description}</p>

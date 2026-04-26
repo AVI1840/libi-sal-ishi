@@ -1,7 +1,9 @@
 import { Button } from '@libi/shared-ui';
 import { DecisionExplainer } from '@libi/shared-ui/components/DecisionExplainer';
+import { ServiceFeedbackModal } from '@libi/shared-ui/components/ServiceFeedbackModal';
 import { RECOMMENDATION_TYPE_LABELS } from '@libi/shared-ui/data/scenario';
 import { Calendar, Check, Clock, MapPin, Star, Users } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BottomNav } from '../components/BottomNav';
@@ -14,6 +16,7 @@ export default function ServiceDetails() {
   const { bookService, currentClient, recommendations } = useApp();
 
   const service = recommendations.find(s => s.id === id);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   if (!service) {
     return (
@@ -170,9 +173,30 @@ export default function ServiceDetails() {
               <Calendar className="w-5 h-5 ml-2" />
               הזמן עכשיו
             </Button>
+            {/* Show feedback button for completed bookings */}
+            {currentClient.walletUsed > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full mt-2 bg-white/20 text-white border-white/30 hover:bg-white/30"
+                onClick={() => setFeedbackOpen(true)}
+              >
+                ⭐ דרג שירות שהושלם
+              </Button>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Feedback Modal — shown when user clicks feedback button on completed bookings */}
+      <ServiceFeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        bookingId={`booking-${service?.id || ''}`}
+        serviceName={service?.name || ''}
+        userId={currentClient.id}
+        onSubmit={() => toast.success('תודה על המשוב! 🙏')}
+      />
 
       <BottomNav />
     </div>

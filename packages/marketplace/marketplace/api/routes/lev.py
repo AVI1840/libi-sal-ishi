@@ -2,7 +2,7 @@
 Lev (לב) API Routes - Intake, Recommendations, CRM, and Subsidy endpoints.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -85,6 +85,29 @@ class CRMActionUpdate(BaseModel):
     """Update CRM action status."""
     status: str  # pending, in_progress, completed, dismissed
     notes: str | None = None
+
+
+class PersonaVerification(BaseModel):
+    """Case manager persona verification."""
+    approved: bool = True
+    override_persona: str | None = None
+    case_manager_notes: str | None = None
+
+
+class ICFVerification(BaseModel):
+    """Case manager ICF profile verification."""
+    verified: bool = True
+    verified_by: str = ""
+    notes: str | None = None
+
+
+class FeedbackSubmission(BaseModel):
+    """Post-service feedback from user."""
+    booking_id: str
+    user_id: str
+    rating: int = Field(..., ge=1, le=5)
+    comment: str | None = None
+    would_recommend: bool = True
 
 
 # ===========================================
@@ -341,6 +364,137 @@ async def update_crm_action(action_id: str, update: CRMActionUpdate) -> dict:
     }
 
 
+@router.get("/crm/escalated")
+async def get_escalated_actions() -> dict:
+    """
+    Get CRM actions that were auto-escalated.
+
+    Actions are escalated when:
+    - URGENT actions not handled within 72 hours (1 week)
+    - HIGH actions not handled within 1 week
+    """
+    # In production: query DB for escalated actions
+    return {
+        "success": True,
+        "data": {
+            "escalated_actions": [],
+            "total": 0,
+            "escalation_rules": {
+                "urgent_hours": 72,
+                "high_hours": 168,
+                "escalation_target": "authority_manager",
+            },
+        }
+    }
+
+
+# ===========================================
+# Persona Verification Endpoints
+# ===========================================
+
+@router.post("/persona/{user_id}/verify")
+async def verify_persona(user_id: str, verification: PersonaVerification) -> dict:
+    """
+    Case manager verifies or overrides the algorithmically-derived persona.
+
+    This is critical because persona affects all recommendations (boost up to ×1.5).
+    """
+    # In production: update persona in DB, log audit trail
+    result = {
+        "user_id": user_id,
+        "approved": verification.approved,
+        "verified_at": datetime.now().isoformat(),
+    }
+
+    if verification.override_persona:
+        result["new_persona"] = verification.override_persona
+        result["message_he"] = f"הפרסונה עודכנה ל-{verification.override_persona}"
+    elif verification.approved:
+        result["message_he"] = "הפרסונה אושרה ✅"
+    else:
+        result["message_he"] = "הפרסונה נדחתה — נדרש עדכון ידני"
+
+    if verification.case_manager_notes:
+        result["notes"] = verification.case_manager_notes
+
+    return {"success": True, "data": result}
+
+
+# ===========================================
+# ICF Verification Endpoints
+# ===========================================
+
+@router.post("/icf/{user_id}/verify")
+async def verify_icf(user_id: str, verification: ICFVerification) -> dict:
+    """
+    Case manager verifies the self-reported ICF profile.
+
+    This adds a clinical verification layer on top of self-reported data.
+    The safety filter should ideally only use verified profiles.
+    """
+    # In production: update icf_verified flag in DB
+    return {
+        "success": True,
+        "data": {
+            "user_id": user_id,
+            "icf_verified": verification.verified,
+            "verified_by": verification.verified_by,
+            "verified_at": datetime.now().isoformat(),
+            "notes": verification.notes,
+            "message_he": "פרופיל תפקודי אומת ✅" if verification.verified else "פרופיל תפקודי דורש עדכון",
+        }
+    }
+
+
+# ===========================================
+# Feedback Endpoints
+# ===========================================
+
+@router.post("/feedback")
+async def submit_feedback(feedback: FeedbackSubmission) -> dict:
+    """
+    Submit post-service feedback.
+
+    This feeds into the recommendation engine's learning loop:
+    - Rating affects service ranking
+    - Comments are analyzed for sentiment
+    - would_recommend affects social proof score
+    """
+    # In production: save to DB, update service rating, trigger learning
+    return {
+        "success": True,
+        "data": {
+            "feedback_id": str(uuid4()),
+            "booking_id": feedback.booking_id,
+            "user_id": feedback.user_id,
+            "rating": feedback.rating,
+            "submitted_at": datetime.now().isoformat(),
+            "message_he": "תודה על המשוב! 🙏",
+        }
+    }
+
+
+@router.get("/feedback/service/{service_id}")
+async def get_service_feedback(service_id: str) -> dict:
+    """
+    Get aggregated feedback for a service.
+    """
+    # In production: aggregate from DB
+    return {
+        "success": True,
+        "data": {
+            "service_id": service_id,
+            "average_rating": 4.7,
+            "total_reviews": 23,
+            "would_recommend_percent": 91,
+            "recent_comments": [
+                {"rating": 5, "comment": "נהניתי מאוד!", "date": "2026-04-20"},
+                {"rating": 4, "comment": "טוב, אבל רחוק מהבית", "date": "2026-04-18"},
+            ],
+        }
+    }
+
+
 @router.get("/crm/dashboard")
 async def get_crm_dashboard() -> dict:
     """
@@ -353,6 +507,7 @@ async def get_crm_dashboard() -> dict:
                 "total_actions": 12,
                 "urgent_actions": 3,
                 "high_priority_actions": 5,
+                "escalated_actions": 0,
             },
             "by_type": {
                 "silent_users": 4,
@@ -367,9 +522,22 @@ async def get_crm_dashboard() -> dict:
                 "prevention_service_percentage": 62.5,
                 "average_subsidy_rate": 78.3,
                 "wallet_utilization_rate": 71.2,
+                "average_service_rating": 4.7,
+                "feedback_response_rate": 68.0,
+                "icf_verification_rate": 45.0,
+                "persona_verification_rate": 52.0,
+            },
+            "escalation": {
+                "escalation_rules": {
+                    "urgent_threshold_hours": 72,
+                    "high_threshold_hours": 168,
+                    "target": "authority_manager",
+                },
+                "escalated_this_week": 0,
+                "approaching_escalation": 1,
             },
             "trends": {
-                "prevention_trend": "up",  # up, down, stable
+                "prevention_trend": "up",
                 "activity_trend": "stable",
                 "satisfaction_trend": "up",
             },
@@ -541,7 +709,3 @@ def _generate_crm_summary(actions: list[dict]) -> dict:
             "follow_ups": sum(1 for a in actions if a.get("action_type") == "follow_up"),
         }
     }
-
-
-# For backwards compatibility
-from datetime import timedelta

@@ -1081,6 +1081,10 @@ export interface CRMAction {
   dueDate?: string;
   createdAt: string;
   status: 'pending' | 'in_progress' | 'completed' | 'dismissed';
+  // Escalation fields
+  escalated?: boolean;
+  escalatedAt?: string;
+  escalationReason?: string;
 }
 
 export const CRM_ACTION_LABELS: Record<CRMActionType, string> = {

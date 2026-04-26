@@ -80,6 +80,11 @@ class CRMAction:
     completed_at: datetime | None = None
     notes: str | None = None
 
+    # Escalation
+    escalated: bool = False
+    escalated_at: datetime | None = None
+    escalation_reason: str | None = None
+
     def to_dict(self) -> dict:
         """Convert to dictionary for API response."""
         return {
@@ -100,6 +105,9 @@ class CRMAction:
             "suggested_service_id": self.suggested_service_id,
             "suggested_service_name": self.suggested_service_name,
             "status": self.status,
+            "escalated": self.escalated,
+            "escalated_at": self.escalated_at.isoformat() if self.escalated_at else None,
+            "escalation_reason": self.escalation_reason,
         }
 
 
@@ -489,6 +497,58 @@ class CRMEngine:
                     result[user_id] = []
                 result[user_id].append(booking)
         return result
+
+    def check_escalations(
+        self,
+        actions: list[CRMAction],
+        urgent_threshold_hours: int = 72,
+        high_threshold_hours: int = 168,
+    ) -> list[CRMAction]:
+        """
+        Check for actions that need escalation.
+
+        Rules:
+        - URGENT actions not handled within 72 hours → escalate
+        - HIGH actions not handled within 1 week (168 hours) → escalate
+        - Escalation target: authority_manager
+        """
+        escalated: list[CRMAction] = []
+        now = datetime.now()
+
+        for action in actions:
+            if action.status not in ("pending", "in_progress"):
+                continue
+            if action.escalated:
+                continue
+
+            hours_since_created = (now - action.created_at).total_seconds() / 3600
+
+            should_escalate = False
+            reason = ""
+
+            if action.priority == ActionPriority.URGENT and hours_since_created >= urgent_threshold_hours:
+                should_escalate = True
+                reason = f"פעולה דחופה לא טופלה {urgent_threshold_hours} שעות — הועברה למנהל רשות"
+            elif action.priority == ActionPriority.HIGH and hours_since_created >= high_threshold_hours:
+                should_escalate = True
+                reason = f"פעולה בעדיפות גבוהה לא טופלה שבוע — הועברה למנהל רשות"
+
+            if should_escalate:
+                action.escalated = True
+                action.escalated_at = now
+                action.escalation_reason = reason
+                escalated.append(action)
+
+                logger.warning(
+                    "CRM action escalated",
+                    action_id=action.action_id,
+                    action_type=action.action_type.value,
+                    priority=action.priority.value,
+                    hours_since_created=round(hours_since_created, 1),
+                    reason=reason,
+                )
+
+        return escalated
 
     def get_dashboard_summary(
         self,

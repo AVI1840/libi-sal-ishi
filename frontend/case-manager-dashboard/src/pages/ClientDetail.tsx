@@ -3,6 +3,9 @@ import { Badge } from "@libi/shared-ui/components/ui/badge";
 import { Button } from "@libi/shared-ui/components/ui/button";
 import { Progress } from "@libi/shared-ui/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@libi/shared-ui/components/ui/tabs";
+import { PersonaVerification } from "@libi/shared-ui/components/PersonaVerification";
+import { ICFVerification } from "@libi/shared-ui/components/ICFVerification";
+import { verifyPersona, verifyICF } from "@libi/shared-ui/lib/api";
 import {
     Activity,
     ArrowRight,
@@ -157,6 +160,37 @@ export default function ClientDetail() {
             </TabsList>
 
             <TabsContent value="profile" className="dashboard-card">
+              {/* ICF Verification */}
+              <div className="mb-4">
+                <ICFVerification
+                  userId={client.id}
+                  onVerify={(data) => {
+                    verifyICF(client.id, { verified: data.verified, verified_by: 'מתאמת', notes: data.notes });
+                  }}
+                />
+              </div>
+
+              {/* Persona Verification */}
+              {client.levProfile && (
+                <div className="mb-4">
+                  <PersonaVerification
+                    userId={client.id}
+                    userName={client.name}
+                    primaryPersona={client.levProfile.persona || 'independent_spirit'}
+                    secondaryPersonas={client.levProfile.secondaryPersonas || []}
+                    keyTraits={client.levProfile.keyTraits || []}
+                    engagementTips={client.levProfile.engagementTips || []}
+                    onVerify={(data) => {
+                      verifyPersona(client.id, {
+                        approved: data.approved,
+                        override_persona: data.override_persona,
+                        case_manager_notes: data.notes,
+                      });
+                    }}
+                  />
+                </div>
+              )}
+
               <h3 className="text-lg font-semibold text-gray-900 mb-4">מדדים תפקודיים</h3>
               <div className="grid grid-cols-2 gap-4">
                 {profileItems.map((item) => (
