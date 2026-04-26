@@ -189,8 +189,8 @@ export default function Index() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {visible.slice(0, 4).map((service, i) => (
-              <div key={service.id} style={{ animation: `slideUp 0.4s ease ${0.15 + i * 0.08}s both` }}>
+            {visible.slice(0, 8).map((service, i) => (
+              <div key={service.id} style={{ animation: `slideUp 0.4s ease ${0.15 + i * 0.06}s both` }}>
                 <ServiceCard service={service} />
               </div>
             ))}
