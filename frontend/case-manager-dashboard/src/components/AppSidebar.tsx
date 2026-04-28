@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", label: "לוח בקרה", icon: LayoutDashboard, end: true },
-  { to: "/actions", label: "פעולות לב", icon: Sparkles, badge: stats.pendingActions },
+  { to: "/actions", label: "פעולות מתאמת", icon: Sparkles, badge: stats.pendingActions },
   { to: "/clients", label: "מטופלים", icon: Users },
   { to: "/bookings", label: "הזמנות", icon: Calendar },
   { to: "/alerts", label: "התראות", icon: Bell, badge: stats.alertsUnread, badgeTone: "destructive" as const },
@@ -25,8 +25,8 @@ export default function AppSidebar() {
             <Heart className="w-5 h-5" fill="currentColor" />
           </div>
           <div>
-            <div className="font-bold text-lg leading-none text-primary">לב</div>
-            <div className="text-[11px] text-muted-foreground mt-1">לוח בקרה למתאמות</div>
+            <div className="font-bold text-lg leading-none text-primary">סל אישי</div>
+            <div className="text-[11px] text-muted-foreground mt-1">לוח בקרה למתאמת / מלווה חברתית</div>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function AppSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-sidebar-foreground truncate">שרית מזרחי</div>
-            <div className="text-[11px] text-muted-foreground truncate">מתאמת טיפול</div>
+            <div className="text-[11px] text-muted-foreground truncate">מלווה חברתית</div>
           </div>
           <button
             className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-background hover:text-destructive transition-colors"

@@ -174,7 +174,7 @@ export default function Actions() {
   const sectionTone = { high: "bg-destructive", medium: "bg-warning", low: "bg-info" };
 
   return (
-    <AppLayout title="פעולות לב" subtitle={`${actions.filter((a) => a.status !== "completed").length} פעולות פתוחות · ${actions.filter((a) => a.escalated).length} בהסלמה`}>
+    <AppLayout title="פעולות מתאמת" subtitle={`${actions.filter((a) => a.status !== "completed").length} פעולות פתוחות · ${actions.filter((a) => a.escalated).length} בהסלמה`}>
       <div className="space-y-8 max-w-5xl">
         {(["high", "medium", "low"] as const).map((p) => (
           <section key={p}>

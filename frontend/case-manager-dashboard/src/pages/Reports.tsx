@@ -3,9 +3,9 @@ import { Card } from "@/components/common/Card";
 import { FileBarChart2, Download, TrendingUp, Calendar } from "lucide-react";
 
 const REPORTS = [
-  { icon: TrendingUp, title: "דוח ניצול הסל הרבעוני", desc: "סקירת ניצול יחידות לפי עולם תוכן ולפי רמת סיעוד.", date: "Q1 2025" },
-  { icon: FileBarChart2, title: "דוח התערבויות מונעות", desc: "כל פעולות לב שהתבצעו והשפעתן על מדדי הבדידות.", date: "אפריל 2025" },
-  { icon: Calendar, title: "דוח שביעות רצון מטופלים", desc: "ציוני שירות, פידבק ודירוג ספקים.", date: "מרץ 2025" },
+  { icon: TrendingUp, title: "דוח ניצול הסל הרבעוני", desc: "סקירת ניצול יחידות לפי עולם תוכן ולפי רמת סיעוד.", date: "Q1 2026" },
+  { icon: FileBarChart2, title: "דוח התערבויות מתאמת", desc: "כל פעולות המתאמת שהתבצעו והשפעתן על מדדי הבדידות.", date: "אפריל 2026" },
+  { icon: Calendar, title: "דוח שביעות רצון מטופלים", desc: "ציוני שירות, פידבק ודירוג ספקים.", date: "מרץ 2026" },
 ];
 
 export default function Reports() {

@@ -216,15 +216,23 @@ export default function ClientDetail() {
                 <div className="max-w-md mx-auto mt-5">
                   <ProgressBar value={client.wallet.balance} max={client.wallet.total} tone="primary" />
                 </div>
+                <div className="text-xs text-muted-foreground mt-3">תפוגה: 90 יום מיום ההקצאה · רמת סיעוד {client.nursingLevel}</div>
               </Card>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-3 gap-5">
                 <Card>
                   <div className="text-xs text-muted-foreground">סה״כ הקצאה</div>
                   <div className="text-2xl font-bold text-foreground mt-1 tabular-nums">{client.wallet.total} יח׳</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">חודשי · רמה {client.nursingLevel}</div>
                 </Card>
                 <Card>
                   <div className="text-xs text-muted-foreground">נוצלו</div>
                   <div className="text-2xl font-bold text-foreground mt-1 tabular-nums">{client.wallet.total - client.wallet.balance} יח׳</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{Math.round(((client.wallet.total - client.wallet.balance) / client.wallet.total) * 100)}% ניצול</div>
+                </Card>
+                <Card>
+                  <div className="text-xs text-muted-foreground">נותרו</div>
+                  <div className={cn("text-2xl font-bold mt-1 tabular-nums", client.wallet.balance / client.wallet.total < 0.3 ? "text-warning" : "text-success")}>{client.wallet.balance} יח׳</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{Math.round((client.wallet.balance / client.wallet.total) * 100)}% זמין</div>
                 </Card>
               </div>
               <Card className="bg-success-soft/50 border-success/30">

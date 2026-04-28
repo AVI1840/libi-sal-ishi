@@ -92,7 +92,7 @@ function SarahSpotlight() {
 function DailySchedule() {
   return (
     <Card>
-      <CardHeader title="לוח הזמנים היומי" subtitle="יום ראשון, 27 באפריל 2025" />
+      <CardHeader title="לוח הזמנים היומי" subtitle="יום שני, 27 באפריל 2026" />
       <div className="space-y-1">
         {schedule.map((item) => {
           const Icon = SCHEDULE_ICON_MAP[item.type];
@@ -133,7 +133,7 @@ function CrmActions() {
   return (
     <Card>
       <CardHeader
-        title="פעולות לב מומלצות"
+        title="פעולות מומלצות למתאמת"
         subtitle="התערבויות מותאמות לשרה כהן"
         action={<Link to="/actions" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">לכל הפעולות <ChevronLeft className="w-3.5 h-3.5" /></Link>}
       />
@@ -239,6 +239,15 @@ function AttentionTable() {
 export default function Dashboard() {
   return (
     <AppLayout title="בוקר טוב, שרית 👋" subtitle="הנה מה שמחכה לך היום — 3 פעולות דחופות, 5 מטופלים דורשים תשומת לב.">
+      {/* Demo transparency banner */}
+      <div className="mb-5 p-3 rounded-lg border border-info/30 bg-info-soft/50 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-info text-info-foreground flex items-center justify-center shrink-0 text-sm">🔬</div>
+        <div className="flex-1">
+          <div className="text-xs font-semibold text-foreground">סביבת הדגמה מבוקרת</div>
+          <div className="text-[11px] text-muted-foreground">הנתונים בממשק זה הם לצורך הדגמה. הלוגיקה העסקית (המלצות, סבסוד, CRM) פועלת באופן מלא.</div>
+        </div>
+      </div>
+
       {/* 5 stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <StatCard icon={Users} label="מטופלים" value={stats.totalClients} sub={`${stats.activeClients} פעילים`} tone="primary" />
