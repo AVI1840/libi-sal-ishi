@@ -15,6 +15,7 @@ import Actions from "./pages/Actions";
 import Alerts from "./pages/Alerts";
 import Bookings from "./pages/Bookings";
 import Reports from "./pages/Reports";
+import Strategic from "./pages/Strategic";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => {
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/bookings" element={<Bookings />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/strategic" element={<Strategic />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
