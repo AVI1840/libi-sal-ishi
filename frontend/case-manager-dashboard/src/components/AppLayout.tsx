@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import AppSidebar from "./AppSidebar";
+import ModuleSwitcher from "./ModuleSwitcher";
 
 export default function AppLayout({ children, title, subtitle, actions }: { children: ReactNode; title?: string; subtitle?: string; actions?: ReactNode }) {
   return (
@@ -12,7 +13,10 @@ export default function AppLayout({ children, title, subtitle, actions }: { chil
               <h1 className="text-2xl font-bold text-foreground tracking-tight">{title}</h1>
               {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
             </div>
-            {actions}
+            <div className="flex items-center gap-3">
+              <ModuleSwitcher />
+              {actions}
+            </div>
           </header>
         )}
         <div className="p-8 animate-fade-in">{children}</div>

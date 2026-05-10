@@ -10,7 +10,7 @@ const NAV = [
   { to: "/bookings", label: "הזמנות", icon: Calendar },
   { to: "/alerts", label: "התראות", icon: Bell, badge: stats.alertsUnread, badgeTone: "destructive" as const },
   { to: "/reports", label: "דוחות", icon: FileBarChart2 },
-  { to: "/strategic", label: "דשבורד אסטרטגי", icon: Building2 },
+  { to: "/strategic", label: "דשבורד ניהולי", icon: Building2 },
   { to: "/settings", label: "הגדרות", icon: Settings },
 ];
 

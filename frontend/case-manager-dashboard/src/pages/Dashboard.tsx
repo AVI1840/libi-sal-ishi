@@ -8,11 +8,110 @@ import { schedule, actions, alerts, attentionRows } from "@/data/mock";
 import { getClient } from "@/data/clients";
 import { getService } from "@/data/services";
 import { ACTION_TYPE_LABELS, NURSING_LEVEL_TONE, RISK_LABELS, CONTENT_WORLDS } from "@/data/constants";
-import { Users, AlertTriangle, Calendar, Bell, Wallet, ArrowUpRight, ArrowDownRight, Home, Phone, Package, FileText, Sparkles, ChevronLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, AlertTriangle, Calendar, Bell, Wallet, ArrowUpRight, ArrowDownRight, Home, Phone, Package, FileText, Sparkles, ChevronLeft, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const SCHEDULE_ICON_MAP = { visit: Home, call: Phone, vendor: Package, plan: FileText, assessment: AlertTriangle, family: Users, report: FileText };
+
+/* ── RDI/SDI Data ── */
+const CARE_LEVEL_DATA = [
+  { level: "רמה 1", count: 4 },
+  { level: "רמה 2", count: 7 },
+  { level: "רמה 3", count: 8 },
+  { level: "רמה 4", count: 6 },
+  { level: "רמה 5", count: 3 },
+];
+
+const URGENT_PATIENTS = [
+  { name: "לאה שמעון", age: 83, level: 4, rdi: 1.52, sdi: 5, status: "דחוף", statusColor: "bg-destructive/10 text-destructive" },
+  { name: "שרה אברהם", age: 88, level: 1, rdi: 1.49, sdi: 0, status: "דחוף", statusColor: "bg-destructive/10 text-destructive" },
+  { name: "אסתר נחום", age: 87, level: 3, rdi: 1.41, sdi: 11, status: "לבדיקה", statusColor: "bg-warning/10 text-warning-foreground" },
+  { name: "אברהם פרץ", age: 79, level: 2, rdi: 1.34, sdi: 8, status: "לבדיקה", statusColor: "bg-warning/10 text-warning-foreground" },
+  { name: "מרים דוד", age: 85, level: 4, rdi: 1.22, sdi: 33, status: "מעקב", statusColor: "bg-info-soft text-info" },
+];
+
+function rdiColor(rdi: number) {
+  if (rdi > 1.5) return "text-destructive font-bold";
+  if (rdi >= 1.2) return "text-warning-foreground font-bold";
+  return "text-success";
+}
+
+function sdiColor(sdi: number) {
+  if (sdi === 0) return "text-destructive font-bold";
+  if (sdi < 17) return "text-warning-foreground font-bold";
+  return "text-success";
+}
+
+function RdiSdiPanel() {
+  return (
+    <Card>
+      <CardHeader title="מדדי הדרדרות — RDI / SDI" subtitle="מטופלים דורשים תשומת לב מועדפת" />
+      {/* Mini stats */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="bg-destructive-soft/60 rounded-lg p-3 text-center">
+          <div className="text-xl font-extrabold text-destructive">5</div>
+          <div className="text-[11px] text-muted-foreground">RDI&gt;1.3</div>
+        </div>
+        <div className="bg-destructive-soft/60 rounded-lg p-3 text-center">
+          <div className="text-xl font-extrabold text-destructive">2</div>
+          <div className="text-[11px] text-muted-foreground">SDI=0</div>
+        </div>
+        <div className="bg-primary-soft rounded-lg p-3 text-center">
+          <div className="text-xl font-extrabold text-primary">24.3</div>
+          <div className="text-[11px] text-muted-foreground">SDI ממוצע</div>
+        </div>
+      </div>
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-xs text-muted-foreground">
+              <th className="text-right py-2 font-semibold">שם</th>
+              <th className="text-right py-2 font-semibold">גיל</th>
+              <th className="text-right py-2 font-semibold">רמה</th>
+              <th className="text-right py-2 font-semibold">RDI</th>
+              <th className="text-right py-2 font-semibold">SDI</th>
+              <th className="text-right py-2 font-semibold">סטטוס</th>
+            </tr>
+          </thead>
+          <tbody>
+            {URGENT_PATIENTS.map((p, i) => (
+              <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
+                <td className="py-2 font-semibold text-foreground">{p.name}</td>
+                <td className="py-2">{p.age}</td>
+                <td className="py-2">{p.level}</td>
+                <td className={cn("py-2", rdiColor(p.rdi))}>{p.rdi.toFixed(2)}</td>
+                <td className={cn("py-2", sdiColor(p.sdi))}>{p.sdi}</td>
+                <td className="py-2">
+                  <span className={cn("px-2 py-0.5 rounded-full text-[11px] font-bold", p.statusColor)}>{p.status}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+function CareLevelChart() {
+  return (
+    <Card>
+      <CardHeader title="התפלגות לפי רמת גמלה" subtitle="28 מטופלים בפיילוט" />
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={CARE_LEVEL_DATA}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(207 95% 35% / 0.1)" />
+          <XAxis dataKey="level" tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} />
+          <Tooltip formatter={(v: number) => [v, "מטופלים"]} />
+          <Bar dataKey="count" fill="#1B3A5C" radius={[6, 6, 0, 0]} name="מטופלים" />
+        </BarChart>
+      </ResponsiveContainer>
+    </Card>
+  );
+}
 
 function StatCard({ icon: Icon, label, value, sub, tone = "primary" }: { icon: any; label: string; value: string | number; sub: string; tone?: "primary" | "warning" | "success" | "info" | "destructive" }) {
   const toneMap = {
@@ -261,11 +360,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-6">
           <SarahSpotlight />
+          <RdiSdiPanel />
           <DailySchedule />
           <CrmActions />
         </div>
         <div className="lg:col-span-2 space-y-6">
           <KpiPanel />
+          <CareLevelChart />
           <AlertsPanel />
           <AttentionTable />
         </div>
