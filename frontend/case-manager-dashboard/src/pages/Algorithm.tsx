@@ -8,7 +8,7 @@ import AppLayout from "@/components/AppLayout";
 import { Card, CardHeader } from "@/components/common/Card";
 import { Chip } from "@/components/common/Chip";
 import { cn } from "@/lib/utils";
-import { Target, Heart, User, Star, MapPin, Save, RotateCcw, Sparkles } from "lucide-react";
+import { Target, Heart, User, Star, MapPin, CheckCircle2, ArrowUpRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 /* ═══════════════════════════════════════════
@@ -118,7 +118,7 @@ export default function Algorithm() {
                   onClick={handleReset}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                   איפוס
                 </button>
               }
@@ -221,14 +221,14 @@ export default function Algorithm() {
               )}
               disabled={totalWeight !== 100}
             >
-              <Save className="w-4 h-4" />
+              <CheckCircle2 className="w-4 h-4" />
               שמור הגדרות
             </button>
             <button
               onClick={handleReset}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
             >
-              <RotateCcw className="w-4 h-4" />
+              <ArrowUpRight className="w-4 h-4" />
               איפוס לברירת מחדל
             </button>
           </div>
