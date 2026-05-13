@@ -15,6 +15,7 @@ import { Card, CardHeader } from "@/components/common/Card";
 import { Chip } from "@/components/common/Chip";
 import { ProgressBar } from "@/components/common/ProgressBar";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   Users, Wallet, Heart, TrendingUp, Building2, UserCheck, Package,
   ShieldCheck, AlertTriangle, ArrowUpRight, ArrowDownRight, Target,
@@ -531,17 +532,19 @@ export default function Strategic() {
       {/* ── 6. Key Decisions ── */}
       <Card className="mb-8">
         <CardHeader title="הכרעות נדרשות להרחבה" subtitle="נושאים הממתינים לאישור" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { icon: Building2,   title: "מודל התקשרויות",  desc: "3 צירים: מפעיל מערכת, מפעיל שטח, ספקים מקומיים. נדרש אישור מבנה חוזי.", tone: "primary" as const },
             { icon: CreditCard,  title: "מסגרת תקציבית",   desc: "תקרות מחיר ליחידה, תקציב חודשי לאתר, מודל תשלום לספקים.", tone: "warning" as const },
             { icon: ShieldCheck, title: "אבטחה ופרטיות",   desc: "הצפנת PII, הרשאות RBAC, תקנות פרטיות, אישור CISO.", tone: "destructive" as const },
+            { icon: AlertTriangle, title: "חומה רגולטורית", desc: "חברות סיעוד לא יוכלו לספק במקביל שירותי סיעוד והפעלת מודל הסל — מניעת ניגוד עניינים.", tone: "info" as const },
           ].map((d) => {
             const Icon = d.icon;
             const tones = {
               primary: "bg-primary-soft text-primary border-primary/20",
               warning: "bg-warning-soft text-warning-foreground border-warning/20",
               destructive: "bg-destructive-soft text-destructive border-destructive/20",
+              info: "bg-info-soft text-info border-info/20",
             };
             return (
               <div key={d.title} className={cn("rounded-xl border p-5", tones[d.tone])}>
@@ -555,6 +558,34 @@ export default function Strategic() {
               </div>
             );
           })}
+        </div>
+      </Card>
+
+      {/* ── 8. Control & Stop Mechanisms ── */}
+      <Card className="mb-8">
+        <CardHeader title="מנגנון בקרה ועצירה" subtitle="ביטוח לאומי שומר יכולת שליטה מלאה" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { label: "עצירת אתר", desc: "הקפאת פעילות באתר ספציפי", color: "bg-destructive/10 text-destructive border-destructive/20" },
+            { label: "החלפת מפעיל", desc: "החלפת מפעיל שטח שלא עומד ביעדים", color: "bg-destructive/10 text-destructive border-destructive/20" },
+            { label: "הקפאת תקציב", desc: "עצירת תשלומים לאתר/ספק", color: "bg-warning/10 text-warning-foreground border-warning/20" },
+            { label: "גריעת ספק", desc: "הסרת ספק ממאגר המאושרים", color: "bg-warning/10 text-warning-foreground border-warning/20" },
+            { label: "עצירת שירות", desc: "הסרת שירות ספציפי מהסל", color: "bg-info/10 text-info border-info/20" },
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => toast(`⚠️ ${item.label} — נדרש אישור מנהל`)}
+              className={cn("p-3 rounded-xl border text-center transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer", item.color)}
+            >
+              <div className="text-sm font-bold mb-1">{item.label}</div>
+              <div className="text-[10px] opacity-80">{item.desc}</div>
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border">
+          <p className="text-xs text-muted-foreground">
+            <strong className="text-foreground">טריגרים להפעלה:</strong> חריגות KPI משמעותיות · פגיעה באיכות · שחיקת כוח אדם חריגה · תלונות מהותיות · חריגות תקציב · כשלי בקרה
+          </p>
         </div>
       </Card>
     </AppLayout>

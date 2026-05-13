@@ -8,6 +8,7 @@ import { ProgressBar } from "@/components/common/ProgressBar";
 import { getClient } from "@/data/clients";
 import { bookings } from "@/data/mock";
 import { getService } from "@/data/services";
+import { recommendServices, SERVICE_DOMAINS } from "@/data/serviceCatalog";
 import { CONTENT_WORLDS, NURSING_LEVEL_TONE, PERSONA_LABELS, RISK_LABELS, BOOKING_STATUS } from "@/data/constants";
 import { Phone, MapPin, UserRound, ChevronRight, CheckCircle2, AlertCircle, Sparkles, Wallet, Activity, ClipboardList, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -253,104 +254,85 @@ export default function ClientDetail() {
 
           {tab === "plan" && (
             <div className="space-y-5">
-              {/* Personal goals */}
-              <Card>
-                <CardHeader title="רצונות ומטרות" subtitle="מבוסס על שיחת קליטה" />
-                <div className="space-y-3">
-                  <div className="p-3 rounded-lg bg-primary-soft/30 border border-primary/10">
-                    <div className="text-xs font-semibold text-primary mb-1">💭 החלום</div>
-                    <div className="text-sm text-foreground">{client.lev.dream}</div>
+              {/* Personal Dream */}
+              <Card className="bg-gradient-to-br from-primary-soft/30 to-card border-primary/10">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-foreground mb-2">תחומי עניין</div>
-                    <div className="flex flex-wrap gap-2">
-                      {client.lev.meaningTags.map((tag) => (
-                        <Chip key={tag} tone="primary">{tag}</Chip>
-                      ))}
-                    </div>
+                    <div className="text-xs text-muted-foreground mb-1">החלום שלי</div>
+                    <div className="text-base font-semibold text-foreground">{client.lev.dream}</div>
                   </div>
                 </div>
               </Card>
 
-              {/* Layered assessment */}
+              {/* Assessment Layer */}
               <Card>
-                <CardHeader title="הערכה תפקודית שכבתית" subtitle="3 שכבות — בסיס / מורחבת / מקצועית" />
-                <div className="space-y-3">
+                <CardHeader title="שכבת הערכה נוכחית" subtitle="מודל הערכה שכבתי" />
+                <div className="grid grid-cols-3 gap-3">
                   {[
-                    { level: "בסיס", status: "הושלם", date: "20.04.26", by: "Self-report + מלווה", color: "bg-success" },
-                    { level: "מורחבת", status: client.lev.riskFlags.length > 0 ? "נדרשת" : "לא נדרשת", date: client.lev.riskFlags.length > 0 ? "ממתין" : "—", by: "מלווה + שאלון מובנה", color: client.lev.riskFlags.length > 0 ? "bg-warning" : "bg-muted" },
-                    { level: "מקצועית", status: "לא נדרשת", date: "—", by: "גרונטולוג", color: "bg-muted" },
+                    { label: "בסיס", desc: "Self-report + מלווה", active: true, color: "bg-success" },
+                    { label: "מורחבת", desc: "שאלון מובנה", active: client.lev.riskFlags.length >= 2, color: "bg-warning" },
+                    { label: "מקצועית", desc: "גרונטולוג", active: false, color: "bg-destructive" },
                   ].map((layer) => (
-                    <div key={layer.level} className="flex items-center gap-3 p-3 rounded-lg border border-border">
-                      <div className={cn("w-3 h-3 rounded-full shrink-0", layer.color)} />
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-foreground">{layer.level}</div>
-                        <div className="text-xs text-muted-foreground">{layer.by}</div>
-                      </div>
-                      <div className="text-left">
-                        <div className="text-xs font-medium text-foreground">{layer.status}</div>
-                        <div className="text-[11px] text-muted-foreground">{layer.date}</div>
-                      </div>
+                    <div key={layer.label} className={cn("p-3 rounded-xl border text-center", layer.active ? "border-primary/30 bg-primary-soft/20" : "border-border bg-muted/20 opacity-60")}>
+                      <div className={cn("w-3 h-3 rounded-full mx-auto mb-2", layer.active ? layer.color : "bg-muted")} />
+                      <div className="text-sm font-bold text-foreground">{layer.label}</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">{layer.desc}</div>
+                      {layer.active && <Chip tone="success" className="mt-2 text-[10px]">פעיל</Chip>}
                     </div>
                   ))}
                 </div>
-                {client.lev.riskFlags.length > 0 && (
-                  <div className="mt-3 p-3 rounded-lg bg-warning-soft/50 border border-warning/20">
-                    <div className="text-xs font-semibold text-warning-foreground mb-1">⚠️ טריגרים שזוהו</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {client.lev.riskFlags.map((f) => (
-                        <Chip key={f} tone="destructive">{RISK_LABELS[f].icon} {RISK_LABELS[f].label}</Chip>
-                      ))}
+              </Card>
+
+              {/* Recommended Services */}
+              <Card>
+                <CardHeader title="שירותים מומלצים" subtitle="מבוסס על פרופיל, רצונות ודגלי סיכון" />
+                <div className="space-y-2">
+                  {recommendServices({
+                    meaningTags: client.lev.meaningTags,
+                    functionalLevel: client.functional.mobility,
+                    riskFlags: client.lev.riskFlags,
+                    lonelinessScore: client.lev.lonelinessScore,
+                  }).slice(0, 6).map((service) => {
+                    const domain = SERVICE_DOMAINS[service.domain];
+                    return (
+                      <div key={service.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors">
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0" style={{ backgroundColor: `${domain.color}15` }}>
+                          {domain.emoji}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-foreground">{service.name}</div>
+                          <div className="text-xs text-muted-foreground">{domain.label} · {service.subsidyPercent}% סבסוד</div>
+                        </div>
+                        <div className="text-left shrink-0">
+                          <div className="text-xs font-bold text-foreground tabular-nums">{service.unitCost} יח׳</div>
+                          <div className="text-[10px] text-muted-foreground">{service.level === "local" ? "🟢 מקומי" : service.level === "regional" ? "🟡 אזורי" : "🔴 ארצי"}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              {/* Service Level */}
+              <Card>
+                <CardHeader title="רמת שירות" subtitle="יחס מלווה מותאם" />
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border">
+                  <div className={cn("w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm",
+                    client.lev.riskFlags.length >= 2 ? "bg-destructive" : client.lev.riskFlags.length === 1 ? "bg-warning" : "bg-success"
+                  )}>
+                    {client.lev.riskFlags.length >= 2 ? "1:55" : client.lev.riskFlags.length === 1 ? "1:65" : "1:75"}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-foreground">
+                      {client.lev.riskFlags.length >= 2 ? "מורכב" : client.lev.riskFlags.length === 1 ? "סיכון גבוה" : "סטנדרטי"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {client.lev.riskFlags.length >= 2 ? "הסלמה מקצועית — מלווה + עו\"ס" : client.lev.riskFlags.length === 1 ? "2+ דגלי סיכון פעילים" : "ברירת מחדל — ללא דגלי סיכון מרובים"}
                     </div>
                   </div>
-                )}
-              </Card>
-
-              {/* Recommended services */}
-              <Card>
-                <CardHeader title="שירותים מומלצים" subtitle="מבוסס על פרופיל, רצונות וצרכים" />
-                <div className="space-y-2">
-                  {[
-                    { name: "מועדון חברתי שכונתי", category: "שייכות ומשמעות", reason: "ציון בדידות נמוך + מעדיפ/ה פעילות חברתית", subsidy: "100%", icon: "🤝" },
-                    { name: "התעמלות מותאמת לגיל", category: "תפקוד ובריאות", reason: "שמירה על ניידות + מניעת נפילות", subsidy: "100%", icon: "💪" },
-                    { name: "אימון מוח ותפקודים", category: "תפקוד ובריאות", reason: "שמירה על קוגניציה", subsidy: "100%", icon: "🧠" },
-                    { name: "הדרכת סמארטפון", category: "דיגיטציה תומכת", reason: "אוריינות דיגיטלית בסיסית + קשר עם משפחה", subsidy: "50%", icon: "📱" },
-                  ].map((s) => (
-                    <div key={s.name} className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg shrink-0">{s.icon}</div>
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-foreground">{s.name}</div>
-                        <div className="text-xs text-muted-foreground">{s.category}</div>
-                        <div className="text-xs text-info mt-1">💡 {s.reason}</div>
-                      </div>
-                      <Chip tone={s.subsidy === "100%" ? "success" : "warning"}>{s.subsidy} סבסוד</Chip>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => toast("📋 נשלח למלווה לאישור")} className="w-full mt-3 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
-                  אשר תוכנית והפעל שירותים
-                </button>
-              </Card>
-
-              {/* Service history timeline */}
-              <Card>
-                <CardHeader title="ציר זמן" subtitle="אירועים ושינויים" />
-                <div className="space-y-3">
-                  {[
-                    { date: "20.04.26", event: "קליטה במערכת", type: "intake" },
-                    { date: "20.04.26", event: "הערכת בסיס הושלמה", type: "assessment" },
-                    { date: "21.04.26", event: "פרסונה זוהתה: " + persona.label, type: "persona" },
-                    { date: "22.04.26", event: "דגל סיכון: בדידות", type: "risk" },
-                    { date: "25.04.26", event: "תוכנית אישית נוצרה", type: "plan" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
-                      <div>
-                        <div className="text-xs text-muted-foreground">{item.date}</div>
-                        <div className="text-sm text-foreground">{item.event}</div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </Card>
             </div>
