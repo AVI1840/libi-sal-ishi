@@ -8,7 +8,7 @@ import AppLayout from "@/components/AppLayout";
 import { Card, CardHeader } from "@/components/common/Card";
 import { Chip } from "@/components/common/Chip";
 import { cn } from "@/lib/utils";
-import { Sliders, Target, Heart, User, Star, MapPin, Save, RotateCcw, Sparkles } from "lucide-react";
+import { SlidersHorizontal, Target, Heart, User, Star, MapPin, Save, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 /* ═══════════════════════════════════════════
