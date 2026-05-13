@@ -9,6 +9,7 @@
  * - הכרעות נדרשות
  */
 
+import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardHeader } from "@/components/common/Card";
 import { Chip } from "@/components/common/Chip";
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis, Cell,
 } from "recharts";
 
 /* ═══════════════════════════════════════════
@@ -103,6 +104,27 @@ const RISK_SUMMARY = [
   { flag: "סיכון נפילה",   count: 5,  pct: 1.7, tone: "destructive" as const },
 ];
 
+const SCATTER_DATA = [
+  { name: "לאה שמעון", sdi: 5, rdi: 1.52, level: 4 },
+  { name: "שרה אברהם", sdi: 0, rdi: 1.49, level: 5 },
+  { name: "אסתר נחום", sdi: 11, rdi: 1.41, level: 3 },
+  { name: "אברהם פרץ", sdi: 8, rdi: 1.34, level: 2 },
+  { name: "מרים דוד", sdi: 33, rdi: 1.22, level: 4 },
+  { name: "רחל כהן", sdi: 72, rdi: 1.12, level: 3 },
+  { name: "יעקב לוי", sdi: 58, rdi: 0.82, level: 1 },
+  { name: "משה דוד", sdi: 45, rdi: 0.95, level: 2 },
+  { name: "חנה ישראלי", sdi: 32, rdi: 1.28, level: 3 },
+  { name: "דוד מזרחי", sdi: 48, rdi: 0.98, level: 2 },
+  { name: "רבקה אלון", sdi: 28, rdi: 1.18, level: 3 },
+  { name: "שושנה פרץ", sdi: 5, rdi: 1.61, level: 5 },
+];
+
+function dotColor(rdi: number, sdi: number) {
+  if (rdi > 1.5 && sdi < 17) return "#dc2626";
+  if (rdi > 1.2 || sdi < 17) return "#d97706";
+  return "#16a34a";
+}
+
 /* ═══════════════════════════════════════════
    COMPONENT
    ═══════════════════════════════════════════ */
@@ -115,6 +137,7 @@ const toneMap = {
 };
 
 export default function Strategic() {
+  const [selectedPilot, setSelectedPilot] = useState<string | null>(null);
   const totalCitizens = SITES.reduce((s, site) => s + site.citizens, 0);
   const totalEscorts  = SITES.reduce((s, site) => s + site.escorts, 0);
   const totalProviders = SITES.reduce((s, site) => s + site.providers, 0);
@@ -210,7 +233,7 @@ export default function Strategic() {
           <CardHeader title="מפת פיילוטים" subtitle="5 רשויות מתוכננות" />
           <div className="space-y-3">
             {PILOTS.map((p, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <div key={i} className={cn("flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors", p.patients > 0 && "cursor-pointer")} onClick={() => p.patients > 0 && setSelectedPilot(p.city)}>
                 <div className={cn("w-3 h-3 rounded-full shrink-0", p.color)} />
                 <div className="flex-1">
                   <div className="font-semibold text-sm text-foreground">📍 {p.city}</div>
@@ -227,6 +250,40 @@ export default function Strategic() {
               </div>
             ))}
           </div>
+          {selectedPilot && (
+            <div className="mt-4 p-4 rounded-lg border border-primary/20 bg-primary-soft/20 animate-fade-in">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-bold text-foreground">📍 {selectedPilot} — פירוט</h4>
+                <button onClick={() => setSelectedPilot(null)} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-2 rounded bg-card border border-border">
+                  <div className="text-muted-foreground">מטופלים פעילים</div>
+                  <div className="text-lg font-bold text-foreground">28</div>
+                </div>
+                <div className="p-2 rounded bg-card border border-border">
+                  <div className="text-muted-foreground">מתאמות</div>
+                  <div className="text-lg font-bold text-foreground">5</div>
+                </div>
+                <div className="p-2 rounded bg-card border border-border">
+                  <div className="text-muted-foreground">SDI ממוצע</div>
+                  <div className="text-lg font-bold text-success">24.3</div>
+                </div>
+                <div className="p-2 rounded bg-card border border-border">
+                  <div className="text-muted-foreground">RDI ממוצע</div>
+                  <div className="text-lg font-bold text-success">1.14</div>
+                </div>
+                <div className="p-2 rounded bg-card border border-border">
+                  <div className="text-muted-foreground">ניצול סל</div>
+                  <div className="text-lg font-bold text-foreground">71%</div>
+                </div>
+                <div className="p-2 rounded bg-card border border-border">
+                  <div className="text-muted-foreground">שביעות רצון</div>
+                  <div className="text-lg font-bold text-foreground">4.7/5</div>
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* KPI Trend Charts */}
@@ -416,6 +473,60 @@ export default function Strategic() {
           </div>
         </Card>
       </div>
+
+      {/* ── RDI×SDI Scatter Matrix ── */}
+      <Card className="mb-8">
+        <CardHeader title="מטריקס RDI × SDI" subtitle="כל נקודה = מטופל · אזור אדום = סיכון גבוה" />
+        <ResponsiveContainer width="100%" height={320}>
+          <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(207 95% 35% / 0.1)" />
+            <XAxis
+              type="number"
+              dataKey="sdi"
+              name="SDI"
+              domain={[0, 80]}
+              tick={{ fontSize: 11 }}
+              label={{ value: "SDI (מדד שירותים)", position: "insideBottom", offset: -10, style: { fontSize: 11, fill: "#64748b" } }}
+            />
+            <YAxis
+              type="number"
+              dataKey="rdi"
+              name="RDI"
+              domain={[0.5, 2]}
+              tick={{ fontSize: 11 }}
+              label={{ value: "RDI (סיכון הדרדרות)", angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "#64748b" } }}
+            />
+            <ZAxis range={[120, 120]} />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const d = payload[0].payload;
+                  return (
+                    <div className="bg-card rounded-lg shadow-lg p-3 border border-border text-sm" dir="rtl">
+                      <div className="font-bold text-foreground">{d.name}</div>
+                      <div className="text-muted-foreground">RDI: <span className="font-semibold text-foreground">{d.rdi.toFixed(2)}</span></div>
+                      <div className="text-muted-foreground">SDI: <span className="font-semibold text-foreground">{d.sdi}</span></div>
+                      <div className="text-muted-foreground">רמה: {d.level}</div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Scatter data={SCATTER_DATA} name="מטופלים">
+              {SCATTER_DATA.map((entry, i) => (
+                <Cell key={i} fill={dotColor(entry.rdi, entry.sdi)} />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+        {/* Legend */}
+        <div className="flex gap-4 justify-center mt-2 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#dc2626]" /> סיכון גבוה</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#d97706]" /> לבדיקה</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#16a34a]" /> תקין</span>
+        </div>
+      </Card>
 
       {/* ── 6. Key Decisions ── */}
       <Card className="mb-8">

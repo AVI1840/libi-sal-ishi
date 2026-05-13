@@ -11,6 +11,7 @@ import { getService } from "@/data/services";
 import { CONTENT_WORLDS, NURSING_LEVEL_TONE, PERSONA_LABELS, RISK_LABELS, BOOKING_STATUS } from "@/data/constants";
 import { Phone, MapPin, UserRound, ChevronRight, CheckCircle2, AlertCircle, Sparkles, Wallet, Activity, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const TABS = [
   { id: "functional", label: "פרופיל תפקודי", icon: Activity },
@@ -31,6 +32,7 @@ export default function ClientDetail() {
     );
   }
 
+  const [icfVerified, setIcfVerified] = useState(client.functional.verified);
   const persona = PERSONA_LABELS[client.lev.persona];
   const clientBookings = bookings.filter((b) => b.clientId === client.id).sort((a, b) => b.date.localeCompare(a.date));
 
@@ -102,24 +104,32 @@ export default function ClientDetail() {
           {tab === "functional" && (
             <div className="space-y-5">
               {/* ICF verification */}
-              <Card className={cn("border-2", client.functional.verified ? "border-success/40 bg-success-soft/30" : "border-warning/40 bg-warning-soft/30")}>
+              <Card className={cn("border-2", icfVerified ? "border-success/40 bg-success-soft/30" : "border-warning/40 bg-warning-soft/30")}>
                 <div className="flex items-start gap-3">
-                  {client.functional.verified ? (
+                  {icfVerified ? (
                     <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
                     <div className="font-semibold text-foreground text-sm">
-                      אימות פרופיל תפקודי (ICF) {client.functional.verified ? "— מאומת" : "— ממתין לאימות"}
+                      אימות פרופיל תפקודי (ICF) {icfVerified ? "— מאומת" : "— ממתין לאימות"}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      {client.functional.verified
+                      {icfVerified
                         ? "הפרופיל אומת על ידי המתאמת בתאריך 20.04.25."
                         : "יש לאמת את הפרופיל תוך 7 ימים מהערכה הראשונית."}
                     </p>
                     <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer">
-                      <input type="checkbox" defaultChecked={client.functional.verified} className="w-4 h-4 accent-primary" />
+                      <input
+                        type="checkbox"
+                        checked={icfVerified}
+                        onChange={(e) => {
+                          setIcfVerified(e.target.checked);
+                          toast(e.target.checked ? "✅ פרופיל ICF אומת" : "⚠️ אימות ICF בוטל");
+                        }}
+                        className="w-4 h-4 accent-primary"
+                      />
                       <span className="text-foreground">אימתתי את הפרופיל ICF</span>
                     </label>
                   </div>
@@ -149,10 +159,16 @@ export default function ClientDetail() {
                       </ul>
                     </div>
                     <div className="flex gap-2 mt-3">
-                      <button className="px-3 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-glow transition-colors">
+                      <button
+                        onClick={() => toast(`✅ פרסונה אושרה — ${persona.label}`)}
+                        className="px-3 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary-glow transition-colors"
+                      >
                         ✓ אישור פרסונה
                       </button>
-                      <button className="px-3 h-8 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-colors">
+                      <button
+                        onClick={() => toast("📝 מצב עריכה — בקרוב")}
+                        className="px-3 h-8 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                      >
                         עריכה ידנית
                       </button>
                     </div>

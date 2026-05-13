@@ -11,7 +11,7 @@ import { ACTION_TYPE_LABELS, NURSING_LEVEL_TONE, RISK_LABELS, CONTENT_WORLDS } f
 import { Users, AlertTriangle, Calendar, Bell, Wallet, ArrowUpRight, ArrowDownRight, Home, Phone, Package, FileText, Sparkles, ChevronLeft, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 const SCHEDULE_ICON_MAP = { visit: Home, call: Phone, vendor: Package, plan: FileText, assessment: AlertTriangle, family: Users, report: FileText };
 
@@ -113,7 +113,7 @@ function CareLevelChart() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, sub, tone = "primary" }: { icon: any; label: string; value: string | number; sub: string; tone?: "primary" | "warning" | "success" | "info" | "destructive" }) {
+function StatCard({ icon: Icon, label, value, sub, tone = "primary", sparkData }: { icon: any; label: string; value: string | number; sub: string; tone?: "primary" | "warning" | "success" | "info" | "destructive"; sparkData?: number[] }) {
   const toneMap = {
     primary: "bg-primary-soft text-primary",
     warning: "bg-warning-soft text-warning-foreground",
@@ -131,6 +131,15 @@ function StatCard({ icon: Icon, label, value, sub, tone = "primary" }: { icon: a
       <div className="text-2xl font-bold text-foreground tracking-tight">{value}</div>
       <div className="text-sm text-foreground mt-0.5">{label}</div>
       <div className="text-xs text-muted-foreground mt-1">{sub}</div>
+      {sparkData && (
+        <div className="mt-2 -mx-1">
+          <ResponsiveContainer width="100%" height={28}>
+            <LineChart data={sparkData.map((v, i) => ({ v, i }))}>
+              <Line type="monotone" dataKey="v" stroke={tone === "destructive" ? "#ef4444" : tone === "success" ? "#22c55e" : "#1B3A5C"} strokeWidth={1.5} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
@@ -349,11 +358,11 @@ export default function Dashboard() {
 
       {/* 5 stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        <StatCard icon={Users} label="מטופלים" value={stats.totalClients} sub={`${stats.activeClients} פעילים`} tone="primary" />
-        <StatCard icon={AlertTriangle} label="בסיכון" value={stats.atRisk} sub="דורשים התערבות" tone="destructive" />
-        <StatCard icon={Calendar} label="הזמנות" value={stats.bookings} sub={`${stats.bookingsCompleted} הושלמו`} tone="info" />
-        <StatCard icon={Bell} label="התראות" value={stats.alertsTotal} sub={`${stats.alertsUnread} חדשות`} tone="warning" />
-        <StatCard icon={Wallet} label="ניצול סל" value={`${stats.walletUtilization}%`} sub={`יעד: ${stats.walletTarget}%`} tone="success" />
+        <StatCard icon={Users} label="מטופלים" value={stats.totalClients} sub={`${stats.activeClients} פעילים`} tone="primary" sparkData={[60, 63, 65, 68, 70, 72, 75]} />
+        <StatCard icon={AlertTriangle} label="בסיכון" value={stats.atRisk} sub="דורשים התערבות" tone="destructive" sparkData={[14, 12, 13, 11, 10, 9, 8]} />
+        <StatCard icon={Calendar} label="הזמנות" value={stats.bookings} sub={`${stats.bookingsCompleted} הושלמו`} tone="info" sparkData={[5, 7, 6, 8, 9, 10, 12]} />
+        <StatCard icon={Bell} label="התראות" value={stats.alertsTotal} sub={`${stats.alertsUnread} חדשות`} tone="warning" sparkData={[8, 7, 9, 6, 5, 5, 4]} />
+        <StatCard icon={Wallet} label="ניצול סל" value={`${stats.walletUtilization}%`} sub={`יעד: ${stats.walletTarget}%`} tone="success" sparkData={[52, 55, 58, 61, 63, 65, 67]} />
       </div>
 
       {/* 3 + 2 grid */}

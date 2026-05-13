@@ -10,6 +10,7 @@ import { ACTION_TYPE_LABELS, CONTENT_WORLDS, PERSONA_LABELS, RISK_LABELS } from 
 import { ChevronDown, ChevronUp, Phone, Calendar, UserRound, X, AlertOctagon, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { ActionPriority } from "@/data/types";
 
 const PRIORITY_INFO: Record<ActionPriority, { label: string; tone: "destructive" | "warning" | "info"; threshold: number; iconClass: string }> = {
@@ -18,7 +19,7 @@ const PRIORITY_INFO: Record<ActionPriority, { label: string; tone: "destructive"
   low: { label: "עדיפות נמוכה", tone: "info", threshold: 336, iconClass: "bg-info" },
 };
 
-function ActionCard({ actionId }: { actionId: string }) {
+function ActionCard({ actionId, onDismiss }: { actionId: string; onDismiss: (id: string) => void }) {
   const action = actions.find((a) => a.id === actionId)!;
   const client = getClient(action.clientId)!;
   const [expanded, setExpanded] = useState(action.priority === "high");
@@ -142,16 +143,25 @@ function ActionCard({ actionId }: { actionId: string }) {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-2">
-                <button className="flex items-center gap-2 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-glow transition-colors">
+                <button
+                  onClick={() => toast("📞 מתקשרת ל" + client.firstName + "...")}
+                  className="flex items-center gap-2 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-glow transition-colors"
+                >
                   <Phone className="w-4 h-4" /> התקשרי
                 </button>
-                <button className="flex items-center gap-2 px-3 h-9 rounded-lg bg-success text-success-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
+                <button
+                  onClick={() => toast("📅 נפתח חלון תזמון עבור " + client.firstName)}
+                  className="flex items-center gap-2 px-3 h-9 rounded-lg bg-success text-success-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                >
                   <Calendar className="w-4 h-4" /> תזמני שירות
                 </button>
                 <Link to={`/clients/${client.id}`} className="flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors">
                   <UserRound className="w-4 h-4" /> לפרופיל
                 </Link>
-                <button className="flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-muted-foreground text-sm font-medium hover:bg-muted transition-colors mr-auto">
+                <button
+                  onClick={() => { onDismiss(action.id); toast("✅ פעולה נסגרה"); }}
+                  className="flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-muted-foreground text-sm font-medium hover:bg-muted transition-colors mr-auto"
+                >
                   <X className="w-4 h-4" /> סגירה
                 </button>
               </div>
@@ -164,17 +174,25 @@ function ActionCard({ actionId }: { actionId: string }) {
 }
 
 export default function Actions() {
+  const [dismissed, setDismissed] = useState<string[]>([]);
+
+  const handleDismiss = (id: string) => {
+    setDismissed((prev) => [...prev, id]);
+  };
+
+  const activeActions = actions.filter((a) => !dismissed.includes(a.id));
+
   const grouped = {
-    high: actions.filter((a) => a.priority === "high"),
-    medium: actions.filter((a) => a.priority === "medium"),
-    low: actions.filter((a) => a.priority === "low"),
+    high: activeActions.filter((a) => a.priority === "high"),
+    medium: activeActions.filter((a) => a.priority === "medium"),
+    low: activeActions.filter((a) => a.priority === "low"),
   };
 
   const sectionLabel = { high: "עדיפות גבוהה", medium: "עדיפות בינונית", low: "עדיפות נמוכה" };
   const sectionTone = { high: "bg-destructive", medium: "bg-warning", low: "bg-info" };
 
   return (
-    <AppLayout title="פעולות מתאמת" subtitle={`${actions.filter((a) => a.status !== "completed").length} פעולות פתוחות · ${actions.filter((a) => a.escalated).length} בהסלמה`}>
+    <AppLayout title="פעולות מתאמת" subtitle={`${activeActions.filter((a) => a.status !== "completed").length} פעולות פתוחות · ${activeActions.filter((a) => a.escalated).length} בהסלמה`}>
       <div className="space-y-8 max-w-5xl">
         {(["high", "medium", "low"] as const).map((p) => (
           <section key={p}>
@@ -184,7 +202,7 @@ export default function Actions() {
               <span className="text-xs text-muted-foreground">({grouped[p].length})</span>
             </div>
             <div className="space-y-3">
-              {grouped[p].map((a) => <ActionCard key={a.id} actionId={a.id} />)}
+              {grouped[p].map((a) => <ActionCard key={a.id} actionId={a.id} onDismiss={handleDismiss} />)}
             </div>
           </section>
         ))}

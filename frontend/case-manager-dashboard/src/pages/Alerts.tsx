@@ -6,11 +6,15 @@ import { alerts as initialAlerts } from "@/data/mock";
 import { ALERT_SEVERITY } from "@/data/constants";
 import { CheckCircle2, BellOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function Alerts() {
   const [items, setItems] = useState(initialAlerts);
 
-  const resolve = (id: string) => setItems((arr) => arr.map((a) => (a.id === id ? { ...a, resolved: true, read: true } : a)));
+  const resolve = (id: string) => {
+    setItems((arr) => arr.map((a) => (a.id === id ? { ...a, resolved: true, read: true } : a)));
+    toast("✅ התראה נסגרה");
+  };
   const markRead = (id: string) => setItems((arr) => arr.map((a) => (a.id === id ? { ...a, read: true } : a)));
 
   const open = items.filter((a) => !a.resolved);
