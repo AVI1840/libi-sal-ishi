@@ -17,6 +17,8 @@ import Bookings from "./pages/Bookings";
 import Reports from "./pages/Reports";
 import Strategic from "./pages/Strategic";
 import Settings from "./pages/Settings";
+import Algorithm from "./pages/Algorithm";
+import Intake from "./pages/Intake";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => {
               <Route path="/reports" element={<Reports />} />
               <Route path="/strategic" element={<Strategic />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/algorithm" element={<Algorithm />} />
+              <Route path="/intake" element={<Intake />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

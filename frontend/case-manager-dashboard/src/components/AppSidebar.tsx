@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Heart, LayoutDashboard, Sparkles, Users, Calendar, Bell, FileBarChart2, Settings, LogOut, Building2 } from "lucide-react";
+import { Heart, LayoutDashboard, Sliders, Sparkles, Users, UserPlus, Calendar, Bell, FileBarChart2, Settings, LogOut, Building2 } from "lucide-react";
 import { stats } from "@/data/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -7,10 +7,12 @@ const NAV = [
   { to: "/", label: "לוח בקרה", icon: LayoutDashboard, end: true },
   { to: "/actions", label: "פעולות מתאמת", icon: Sparkles, badge: stats.pendingActions },
   { to: "/clients", label: "מטופלים", icon: Users },
+  { to: "/intake", label: "קליטה חדשה", icon: UserPlus },
   { to: "/bookings", label: "הזמנות", icon: Calendar },
   { to: "/alerts", label: "התראות", icon: Bell, badge: stats.alertsUnread, badgeTone: "destructive" as const },
   { to: "/reports", label: "דוחות", icon: FileBarChart2 },
   { to: "/strategic", label: "דשבורד ניהולי", icon: Building2 },
+  { to: "/algorithm", label: "אלגוריתם התאמה", icon: Sliders },
   { to: "/settings", label: "הגדרות", icon: Settings },
 ];
 

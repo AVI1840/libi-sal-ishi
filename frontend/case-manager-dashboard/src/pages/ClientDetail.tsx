@@ -9,12 +9,13 @@ import { getClient } from "@/data/clients";
 import { bookings } from "@/data/mock";
 import { getService } from "@/data/services";
 import { CONTENT_WORLDS, NURSING_LEVEL_TONE, PERSONA_LABELS, RISK_LABELS, BOOKING_STATUS } from "@/data/constants";
-import { Phone, MapPin, UserRound, ChevronRight, CheckCircle2, AlertCircle, Sparkles, Wallet, Activity, ClipboardList } from "lucide-react";
+import { Phone, MapPin, UserRound, ChevronRight, CheckCircle2, AlertCircle, Sparkles, Wallet, Activity, ClipboardList, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const TABS = [
   { id: "functional", label: "פרופיל תפקודי", icon: Activity },
+  { id: "plan", label: "תוכנית אישית", icon: Target },
   { id: "wallet", label: "ארנק", icon: Wallet },
   { id: "bookings", label: "הזמנות", icon: ClipboardList },
 ] as const;
@@ -220,6 +221,138 @@ export default function ClientDetail() {
                   </div>
                 </Card>
               </div>
+
+              {/* Professional assessment triggers */}
+              <Card>
+                <CardHeader title="טריגרים להערכה מקצועית" subtitle="דגלים המפעילים הערכה מעמיקה" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {([
+                    { label: "דגל נפילה", condition: client.lev.riskFlags.includes("fall_risk"), icon: "⚠️" },
+                    { label: "דגל קוגניטיבי", condition: client.functional.cognition < 3, icon: "🧠" },
+                    { label: "ירידה תפקודית", condition: client.lev.riskFlags.includes("functional_decline"), icon: "📉" },
+                    { label: "שימוש חריג בסל", condition: client.wallet.balance === client.wallet.total, icon: "💰" },
+                  ] as const).map((trigger) => (
+                    <div
+                      key={trigger.label}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border",
+                        trigger.condition
+                          ? "border-destructive/40 bg-destructive-soft/30 text-destructive"
+                          : "border-border bg-muted/30 text-muted-foreground"
+                      )}
+                    >
+                      <span className="text-lg">{trigger.icon}</span>
+                      <span className={cn("text-sm font-medium", trigger.condition && "font-bold")}>{trigger.label}</span>
+                      {trigger.condition && <span className="mr-auto text-xs font-semibold bg-destructive/10 px-2 py-0.5 rounded-full">פעיל</span>}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {tab === "plan" && (
+            <div className="space-y-5">
+              {/* Personal goals */}
+              <Card>
+                <CardHeader title="רצונות ומטרות" subtitle="מבוסס על שיחת קליטה" />
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-primary-soft/30 border border-primary/10">
+                    <div className="text-xs font-semibold text-primary mb-1">💭 החלום</div>
+                    <div className="text-sm text-foreground">{client.lev.dream}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-foreground mb-2">תחומי עניין</div>
+                    <div className="flex flex-wrap gap-2">
+                      {client.lev.meaningTags.map((tag) => (
+                        <Chip key={tag} tone="primary">{tag}</Chip>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Layered assessment */}
+              <Card>
+                <CardHeader title="הערכה תפקודית שכבתית" subtitle="3 שכבות — בסיס / מורחבת / מקצועית" />
+                <div className="space-y-3">
+                  {[
+                    { level: "בסיס", status: "הושלם", date: "20.04.26", by: "Self-report + מלווה", color: "bg-success" },
+                    { level: "מורחבת", status: client.lev.riskFlags.length > 0 ? "נדרשת" : "לא נדרשת", date: client.lev.riskFlags.length > 0 ? "ממתין" : "—", by: "מלווה + שאלון מובנה", color: client.lev.riskFlags.length > 0 ? "bg-warning" : "bg-muted" },
+                    { level: "מקצועית", status: "לא נדרשת", date: "—", by: "גרונטולוג", color: "bg-muted" },
+                  ].map((layer) => (
+                    <div key={layer.level} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                      <div className={cn("w-3 h-3 rounded-full shrink-0", layer.color)} />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-foreground">{layer.level}</div>
+                        <div className="text-xs text-muted-foreground">{layer.by}</div>
+                      </div>
+                      <div className="text-left">
+                        <div className="text-xs font-medium text-foreground">{layer.status}</div>
+                        <div className="text-[11px] text-muted-foreground">{layer.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {client.lev.riskFlags.length > 0 && (
+                  <div className="mt-3 p-3 rounded-lg bg-warning-soft/50 border border-warning/20">
+                    <div className="text-xs font-semibold text-warning-foreground mb-1">⚠️ טריגרים שזוהו</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {client.lev.riskFlags.map((f) => (
+                        <Chip key={f} tone="destructive">{RISK_LABELS[f].icon} {RISK_LABELS[f].label}</Chip>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card>
+
+              {/* Recommended services */}
+              <Card>
+                <CardHeader title="שירותים מומלצים" subtitle="מבוסס על פרופיל, רצונות וצרכים" />
+                <div className="space-y-2">
+                  {[
+                    { name: "מועדון חברתי שכונתי", category: "שייכות ומשמעות", reason: "ציון בדידות נמוך + מעדיפ/ה פעילות חברתית", subsidy: "100%", icon: "🤝" },
+                    { name: "התעמלות מותאמת לגיל", category: "תפקוד ובריאות", reason: "שמירה על ניידות + מניעת נפילות", subsidy: "100%", icon: "💪" },
+                    { name: "אימון מוח ותפקודים", category: "תפקוד ובריאות", reason: "שמירה על קוגניציה", subsidy: "100%", icon: "🧠" },
+                    { name: "הדרכת סמארטפון", category: "דיגיטציה תומכת", reason: "אוריינות דיגיטלית בסיסית + קשר עם משפחה", subsidy: "50%", icon: "📱" },
+                  ].map((s) => (
+                    <div key={s.name} className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg shrink-0">{s.icon}</div>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-foreground">{s.name}</div>
+                        <div className="text-xs text-muted-foreground">{s.category}</div>
+                        <div className="text-xs text-info mt-1">💡 {s.reason}</div>
+                      </div>
+                      <Chip tone={s.subsidy === "100%" ? "success" : "warning"}>{s.subsidy} סבסוד</Chip>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => toast("📋 נשלח למלווה לאישור")} className="w-full mt-3 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+                  אשר תוכנית והפעל שירותים
+                </button>
+              </Card>
+
+              {/* Service history timeline */}
+              <Card>
+                <CardHeader title="ציר זמן" subtitle="אירועים ושינויים" />
+                <div className="space-y-3">
+                  {[
+                    { date: "20.04.26", event: "קליטה במערכת", type: "intake" },
+                    { date: "20.04.26", event: "הערכת בסיס הושלמה", type: "assessment" },
+                    { date: "21.04.26", event: "פרסונה זוהתה: " + persona.label, type: "persona" },
+                    { date: "22.04.26", event: "דגל סיכון: בדידות", type: "risk" },
+                    { date: "25.04.26", event: "תוכנית אישית נוצרה", type: "plan" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">{item.date}</div>
+                        <div className="text-sm text-foreground">{item.event}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </div>
           )}
 
