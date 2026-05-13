@@ -477,7 +477,7 @@ export default function Strategic() {
 
       {/* ── RDI×SDI Scatter Matrix ── */}
       <Card className="mb-8">
-        <CardHeader title="מטריקס RDI × SDI" subtitle="כל נקודה = מטופל · אזור אדום = סיכון גבוה" />
+        <CardHeader title="מטריקס סיכון × שירותים" subtitle="ציר X: שירותים פעילים (SDI) · ציר Y: סיכון הדרדרות (RDI) · אדום = דורש התערבות" />
         <ResponsiveContainer width="100%" height={320}>
           <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(207 95% 35% / 0.1)" />

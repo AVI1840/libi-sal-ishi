@@ -47,7 +47,11 @@ function sdiColor(sdi: number) {
 function RdiSdiPanel() {
   return (
     <Card>
-      <CardHeader title="מדדי הדרדרות — RDI / SDI" subtitle="מטופלים דורשים תשומת לב מועדפת" />
+      <CardHeader title="מדדי הדרדרות" subtitle="מטופלים דורשים תשומת לב מועדפת" />
+      <div className="mb-4 p-3 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground leading-relaxed space-y-1">
+        <div><strong className="text-foreground">RDI (מדד סיכון הדרדרות)</strong> — ככל שגבוה יותר, כך הסיכון להחמרה במצב גדול יותר. מעל 1.3 = דורש התערבות.</div>
+        <div><strong className="text-foreground">SDI (מדד שירותים פעילים)</strong> — כמה שירותי מניעה פעילים. 0 = לא משתמש בשום שירות. ככל שגבוה יותר = טוב יותר.</div>
+      </div>
       {/* Mini stats */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-destructive-soft/60 rounded-lg p-3 text-center">

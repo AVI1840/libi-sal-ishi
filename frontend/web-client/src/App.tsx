@@ -2,6 +2,7 @@ import { TooltipProvider } from "@libi/shared-ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
+import { AccessibilityBar } from "./components/AccessibilityBar";
 import { DemoNav } from "./components/DemoNav";
 import { AppProvider } from "./contexts/AppContext";
 import Chat from "./pages/Chat";
@@ -19,6 +20,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AppProvider>
+        <AccessibilityBar />
         <DemoNav current="client" />
         <Toaster position="top-center" richColors />
         <BrowserRouter>

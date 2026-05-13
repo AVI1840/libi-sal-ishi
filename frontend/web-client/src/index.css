@@ -92,3 +92,15 @@
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 }
+
+/* High contrast mode for accessibility */
+.high-contrast {
+  --background: 0 0% 0% !important;
+  --foreground: 0 0% 100% !important;
+  --card: 0 0% 5% !important;
+  --card-foreground: 0 0% 100% !important;
+  --muted: 0 0% 15% !important;
+  --muted-foreground: 0 0% 85% !important;
+  --border: 0 0% 40% !important;
+  filter: contrast(1.3);
+}
